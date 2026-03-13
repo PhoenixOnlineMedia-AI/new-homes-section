@@ -198,15 +198,24 @@ CREATE INDEX idx_builders_slug ON builders(slug);
 CREATE INDEX idx_builders_verified ON builders(is_verified);
 
 -- Full-text search (for hybrid search)
-ALTER TABLE communities ADD COLUMN search_vector tsvector 
-    GENERATED ALWAYS AS (
-        setweight(to_tsvector('english', COALESCE(name, '')), 'A') ||
-        setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
-        setweight(to_tsvector('english', COALESCE(city, '')), 'C') ||
-        setweight(to_tsvector('english', COALESCE(amenities::text, '')), 'D')
-    ) STORED;
+ALTER TABLE communities ADD COLUMN search_vector tsvector;
 
 CREATE INDEX idx_communities_search ON communities USING GIN(search_vector);
+
+CREATE OR REPLACE FUNCTION communities_search_vector_update() RETURNS trigger AS $$
+BEGIN
+    NEW.search_vector :=
+        setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.city, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(array_to_string(NEW.amenities, ' '), '')), 'D');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER communities_search_vector_trigger
+BEFORE INSERT OR UPDATE ON communities
+FOR EACH ROW EXECUTE FUNCTION communities_search_vector_update();
 
 -- ============================================
 -- Updated At Trigger Function

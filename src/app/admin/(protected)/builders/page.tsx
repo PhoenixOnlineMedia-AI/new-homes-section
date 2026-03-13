@@ -15,7 +15,7 @@ import type { Builder } from '@/lib/supabase/database.types'
 
 export default async function BuildersAdminPage() {
   const supabase = await createClient()
-  
+
   const { data: buildersData } = await supabase
     .from('builders')
     .select('*')
@@ -88,8 +88,10 @@ export default async function BuildersAdminPage() {
                     <TableCell>{builder.phone || '-'}</TableCell>
                     <TableCell>{builder.rating || '-'}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        Edit
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/builders/${builder.id}/edit`}>
+                          Edit
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>

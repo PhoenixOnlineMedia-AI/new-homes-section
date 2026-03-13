@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  ChevronDown,
+  ChevronUp,
   Filter,
   X,
   SlidersHorizontal
@@ -26,6 +27,7 @@ interface BuildersFilterProps {
   type?: 'checkbox' | 'radio'
   defaultExpanded?: boolean
   onChange?: (value: string, checked: boolean) => void
+  searchParamKey?: string
 }
 
 export function BuildersFilter({
@@ -34,14 +36,24 @@ export function BuildersFilter({
   type = 'checkbox',
   defaultExpanded = true,
   onChange,
+  searchParamKey,
 }: BuildersFilterProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
-  const [selectedValues, setSelectedValues] = useState<string[]>([])
   const [showAll, setShowAll] = useState(false)
+
+  const selectedValues = useMemo(() => {
+    if (!searchParamKey) return []
+    const param = searchParams.get(searchParamKey)
+    return param ? param.split(',') : []
+  }, [searchParams, searchParamKey])
 
   const handleToggle = (value: string) => {
     let newValues: string[]
-    
+
     if (type === 'radio') {
       newValues = selectedValues.includes(value) ? [] : [value]
     } else {
@@ -49,13 +61,26 @@ export function BuildersFilter({
         ? selectedValues.filter(v => v !== value)
         : [...selectedValues, value]
     }
-    
-    setSelectedValues(newValues)
+
+    if (searchParamKey) {
+      const params = new URLSearchParams(searchParams.toString())
+      if (newValues.length > 0) {
+        params.set(searchParamKey, newValues.join(','))
+      } else {
+        params.delete(searchParamKey)
+      }
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+
     onChange?.(value, !selectedValues.includes(value))
   }
 
   const handleClear = () => {
-    setSelectedValues([])
+    if (searchParamKey) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete(searchParamKey)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    }
   }
 
   const displayOptions = showAll ? options : options.slice(0, 6)
@@ -64,9 +89,17 @@ export function BuildersFilter({
   return (
     <Card className="border-slate-200">
       <CardHeader className="p-4 pb-0">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full text-left"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsExpanded(!isExpanded)
+            }
+          }}
+          className="flex items-center justify-between w-full text-left cursor-pointer"
         >
           <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-slate-400" />
@@ -84,9 +117,9 @@ export function BuildersFilter({
               <ChevronDown className="h-4 w-4 text-slate-400" />
             )}
           </div>
-        </button>
+        </div>
       </CardHeader>
-      
+
       {isExpanded && (
         <CardContent className="p-4 pt-3">
           <div className="space-y-2">
@@ -157,11 +190,11 @@ export function MobileFilterDrawer({
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl">
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
@@ -181,11 +214,11 @@ export function MobileFilterDrawer({
             <X className="h-5 w-5 text-slate-600" />
           </button>
         </div>
-        
+
         <div className="overflow-y-auto h-[calc(100vh-80px)] p-4">
           {children}
         </div>
-        
+
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200">
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={onClose}>

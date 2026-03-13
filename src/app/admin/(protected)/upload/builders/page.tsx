@@ -1,6 +1,6 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export default function UploadBuildersPage() {
@@ -8,8 +8,8 @@ export default function UploadBuildersPage() {
 
   async function uploadBuilders(data: Record<string, string>[]) {
     'use server'
-    
-    const supabase = await createClient()
+
+    const supabase = createAdminClient()
     const errors: string[] = []
     let successCount = 0
 

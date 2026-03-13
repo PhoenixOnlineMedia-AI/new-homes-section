@@ -307,6 +307,42 @@ export type HomeUpdate = {
   updated_at?: string
 }
 
+export type BuilderMarketRow = {
+  id: string
+  builder_id: string
+  city: string | null
+  state_code: string
+  local_description: string | null
+  is_featured: boolean | null
+  sort_order: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type BuilderMarketInsert = {
+  id?: string
+  builder_id: string
+  city?: string | null
+  state_code: string
+  local_description?: string | null
+  is_featured?: boolean | null
+  sort_order?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type BuilderMarketUpdate = {
+  id?: string
+  builder_id?: string
+  city?: string | null
+  state_code?: string
+  local_description?: string | null
+  is_featured?: boolean | null
+  sort_order?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
 // Supabase Database interface
 export interface Database {
   public: {
@@ -326,9 +362,26 @@ export interface Database {
         Insert: HomeInsert
         Update: HomeUpdate
       }
+      builder_markets: {
+        Row: BuilderMarketRow
+        Insert: BuilderMarketInsert
+        Update: BuilderMarketUpdate
+      }
     }
     Views: {
-      [_ in never]: never
+      market_builder_stats: {
+        Row: {
+          builder_id: string
+          builder_name: string
+          builder_slug: string
+          logo_url: string | null
+          is_premium: boolean
+          city: string
+          state_code: string
+          community_count: number
+          display_description: string | null
+        }
+      }
     }
     Functions: {
       [_ in never]: never

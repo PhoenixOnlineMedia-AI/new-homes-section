@@ -4,28 +4,28 @@ import { APP_NAME, APP_DESCRIPTION, SOCIAL_LINKS, CONTACT_INFO, POPULAR_STATES }
 
 const footerLinks = {
   browse: [
-    { label: 'New Homes by State', href: '#states' },
-    { label: 'New Homes by City', href: '#cities' },
-    { label: 'New Home Builders', href: '#builders' },
-    { label: 'New Home Communities', href: '#communities' },
+    { label: 'New Homes by State', href: '/#states' },
+    { label: 'New Homes by City', href: '/' },
+    { label: 'New Home Builders', href: '/builders' },
+    { label: 'New Home Communities', href: '/search' },
   ],
   resources: [
-    { label: 'Home Buying Guide', href: '/guide' },
-    { label: 'Mortgage Calculator', href: '/calculator' },
-    { label: 'Moving Checklist', href: '/checklist' },
-    { label: 'Blog', href: '/blog' },
+    { label: 'Home Buying Guide', href: '/' },
+    { label: 'Mortgage Calculator', href: '/' },
+    { label: 'Moving Checklist', href: '/' },
+    { label: 'Blog', href: '/' },
   ],
   company: [
-    { label: 'About Us', href: '/about' },
+    { label: 'About Us', href: '/' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Press', href: '/press' },
+    { label: 'Careers', href: '/' },
+    { label: 'Press', href: '/' },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
-    { label: 'Cookie Policy', href: '/cookies' },
-    { label: 'Accessibility', href: '/accessibility' },
+    { label: 'Privacy Policy', href: '/' },
+    { label: 'Terms of Service', href: '/' },
+    { label: 'Cookie Policy', href: '/' },
+    { label: 'Accessibility', href: '/' },
   ],
 }
 
@@ -91,7 +91,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Browse</h3>
             <ul className="space-y-3">
               {footerLinks.browse.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link 
                     href={link.href} 
                     className="text-sm text-slate-400 hover:text-re-emerald-400 transition-colors inline-flex items-center gap-1 group"
@@ -109,7 +109,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Resources</h3>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link 
                     href={link.href} 
                     className="text-sm text-slate-400 hover:text-re-emerald-400 transition-colors inline-flex items-center gap-1 group"
@@ -127,7 +127,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Company</h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link 
                     href={link.href} 
                     className="text-sm text-slate-400 hover:text-re-emerald-400 transition-colors inline-flex items-center gap-1 group"
@@ -193,7 +193,7 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-6">
               {footerLinks.legal.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
                   className="text-xs text-slate-500 hover:text-re-emerald-400 transition-colors"
                 >

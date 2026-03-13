@@ -43,10 +43,10 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVPar
 
   const errors: CSVError[] = []
   const warnings: CSVWarning[] = []
-  
+
   // Split into lines, handling different line endings
   const lines = content.split(/\r?\n/)
-  
+
   if (lines.length === 0) {
     return {
       data: [],
@@ -59,7 +59,7 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVPar
 
   // Parse headers (first line)
   const headers = parseLine(lines[0], trimValues)
-  
+
   // Check for required columns
   for (const col of requiredColumns) {
     if (!headers.includes(col)) {
@@ -73,17 +73,17 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVPar
 
   // Parse data rows
   const data: Record<string, string>[] = []
-  
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i]
-    
+
     // Skip empty lines
     if (skipEmptyLines && !line.trim()) {
       continue
     }
-    
+
     const values = parseLine(line, trimValues)
-    
+
     // Check column count mismatch
     if (values.length !== headers.length) {
       warnings.push({
@@ -92,13 +92,13 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVPar
         message: `Column count mismatch: expected ${headers.length}, got ${values.length}`,
       })
     }
-    
+
     // Build row object
     const row: Record<string, string> = {}
     headers.forEach((header, index) => {
       row[header] = values[index] || ''
     })
-    
+
     data.push(row)
   }
 
@@ -118,11 +118,11 @@ function parseLine(line: string, trim: boolean): string[] {
   const values: string[] = []
   let current = ''
   let inQuotes = false
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i]
     const nextChar = line[i + 1]
-    
+
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
         // Escaped quote
@@ -140,10 +140,10 @@ function parseLine(line: string, trim: boolean): string[] {
       current += char
     }
   }
-  
+
   // Don't forget the last field
   values.push(trim ? current.trim() : current)
-  
+
   return values
 }
 
@@ -164,7 +164,7 @@ export function readFileAsText(file: File): Promise<string> {
  */
 export function generateCSVTemplate(headers: string[], sampleRow?: Record<string, string>): string {
   const headerLine = headers.join(',')
-  
+
   if (sampleRow) {
     const dataLine = headers.map(h => {
       const value = sampleRow[h] || ''
@@ -176,7 +176,7 @@ export function generateCSVTemplate(headers: string[], sampleRow?: Record<string
     }).join(',')
     return `${headerLine}\n${dataLine}`
   }
-  
+
   return headerLine
 }
 
@@ -189,7 +189,7 @@ export interface ValidationRule {
   type?: 'string' | 'number' | 'email' | 'url' | 'date'
   min?: number
   max?: number
-  pattern?: RegExp
+  pattern?: string
   enum?: string[]
 }
 
@@ -281,13 +281,20 @@ export function validateCSVData(
       }
 
       // Pattern validation
-      if (rule.pattern && !rule.pattern.test(value)) {
-        errors.push({
-          row: rowNum,
-          column: rule.column,
-          message: `Value does not match required pattern`,
-          value,
-        })
+      if (rule.pattern) {
+        try {
+          const regex = new RegExp(rule.pattern)
+          if (!regex.test(value)) {
+            errors.push({
+              row: rowNum,
+              column: rule.column,
+              message: `Value does not match required pattern`,
+              value,
+            })
+          }
+        } catch (e) {
+          console.error(`Invalid regex pattern for column ${rule.column}: ${rule.pattern}`)
+        }
       }
 
       // Enum validation

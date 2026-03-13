@@ -20,8 +20,8 @@ const buttonVariants = cva(
           "hover:bg-re-blue-50 hover:text-re-blue-900",
         link: "text-re-blue-700 underline-offset-4 hover:underline hover:text-re-blue-900",
         /* Real Estate Specific Variants */
-        cta: "bg-gradient-to-r from-re-amber-500 to-re-amber-400 text-white hover:from-re-amber-600 hover:to-re-amber-500 shadow-lg hover:shadow-xl border-0",
-        premium: "bg-gradient-to-r from-re-blue-900 to-re-blue-700 text-white hover:from-re-blue-800 hover:to-re-blue-600 shadow-lg hover:shadow-xl border-0",
+        cta: "glass-button",
+        premium: "glass-button glass-button-secondary",
         outlineSecondary: "border-2 border-re-emerald-500 bg-transparent text-re-emerald-700 hover:bg-re-emerald-50",
       },
       size: {

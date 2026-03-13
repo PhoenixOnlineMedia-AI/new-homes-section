@@ -1,6 +1,6 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export default function UploadCommunitiesPage() {
@@ -8,8 +8,8 @@ export default function UploadCommunitiesPage() {
 
   async function uploadCommunities(data: Record<string, string>[]) {
     'use server'
-    
-    const supabase = await createClient()
+
+    const supabase = createAdminClient()
     const errors: string[] = []
     let successCount = 0
 
@@ -21,7 +21,6 @@ export default function UploadCommunitiesPage() {
         .eq('slug', row.builder_slug)
         .single()
 
-      // @ts-ignore
       if (!builder) {
         errors.push(`Row for "${row.name}": Builder "${row.builder_slug}" not found`)
         continue

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Builder Market Ingestion"
+  short_description: "Trusted builder-market ingestion workflow"
+  default_prompt: "Use $builder-market-ingestion to ingest builder and market data from vetted builder domains with strict dedupe and validation."

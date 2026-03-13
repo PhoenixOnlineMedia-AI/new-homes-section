@@ -4,15 +4,16 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Building2, 
-  Star, 
-  MapPin, 
-  Home, 
-  ArrowRight, 
+import {
+  Building2,
+  Star,
+  MapPin,
+  Home,
+  ArrowRight,
   CheckCircle2,
   TrendingUp,
-  Award
+  Award,
+  Edit
 } from 'lucide-react'
 
 interface Community {
@@ -48,9 +49,10 @@ interface Builder {
 
 interface BuilderCardProps {
   builder: Builder
+  isAdmin?: boolean
 }
 
-export function BuilderCard({ builder }: BuilderCardProps) {
+export function BuilderCard({ builder, isAdmin }: BuilderCardProps) {
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-slate-200 overflow-hidden">
       <CardContent className="p-0">
@@ -59,8 +61,12 @@ export function BuilderCard({ builder }: BuilderCardProps) {
           <div className="flex-1 p-6">
             <div className="flex items-start gap-4">
               {/* Logo */}
-              <div className="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200">
-                <Building2 className="h-10 w-10 text-slate-400" />
+              <div className="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200 overflow-hidden p-2">
+                {builder.logo ? (
+                  <img src={builder.logo} alt={`${builder.name} Logo`} className="w-full h-full object-contain" />
+                ) : (
+                  <Building2 className="h-10 w-10 text-slate-400" />
+                )}
               </div>
 
               {/* Builder Details */}
@@ -125,9 +131,9 @@ export function BuilderCard({ builder }: BuilderCardProps) {
                 <div className="flex flex-wrap items-center gap-1.5 mb-3">
                   <span className="text-xs text-slate-500 mr-1">Building in:</span>
                   {builder.activeMarkets.map((market) => (
-                    <Badge 
-                      key={market} 
-                      variant="outline" 
+                    <Badge
+                      key={market}
+                      variant="outline"
                       className="text-xs bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 cursor-pointer transition-colors"
                     >
                       {market}
@@ -138,9 +144,9 @@ export function BuilderCard({ builder }: BuilderCardProps) {
                 {/* Specialties */}
                 <div className="flex flex-wrap gap-1.5">
                   {builder.specialties.map((specialty) => (
-                    <Badge 
-                      key={specialty} 
-                      variant="secondary" 
+                    <Badge
+                      key={specialty}
+                      variant="secondary"
                       className="text-xs bg-slate-100 text-slate-600"
                     >
                       {specialty}
@@ -180,8 +186,8 @@ export function BuilderCard({ builder }: BuilderCardProps) {
 
             {/* Action Buttons */}
             <div className="mt-4 pt-4 border-t border-slate-200 space-y-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
                 asChild
               >
@@ -190,9 +196,9 @@ export function BuilderCard({ builder }: BuilderCardProps) {
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 className="w-full"
                 asChild
               >
@@ -200,6 +206,19 @@ export function BuilderCard({ builder }: BuilderCardProps) {
                   View Communities
                 </Link>
               </Button>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700"
+                  asChild
+                >
+                  <Link href={`/admin/builders/${builder.id}/edit`}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit Builder
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>

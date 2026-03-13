@@ -27,6 +27,7 @@ const navItems = [
       { title: 'Builders CSV', href: '/admin/upload/builders' },
       { title: 'Communities CSV', href: '/admin/upload/communities' },
       { title: 'Homes CSV', href: '/admin/upload/homes' },
+      { title: 'Builder Markets CSV', href: '/admin/upload/builder-markets' },
     ],
   },
   {
@@ -75,7 +76,7 @@ export function AdminNav() {
             <item.icon className="w-5 h-5" />
             {item.title}
           </Link>
-          
+
           {item.children && (pathname?.startsWith(item.href) || pathname === item.href) && (
             <div className="ml-4 mt-1 space-y-1">
               {item.children.map((child) => (

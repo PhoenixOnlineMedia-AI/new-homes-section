@@ -11,14 +11,14 @@ const mainNavItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/builders', label: 'Find Builders', icon: Building2 },
   { href: '/search', label: 'Communities', icon: Search },
-  { href: '#states', label: 'Markets', icon: MapPin },
+  { href: '/#states', label: 'Markets', icon: MapPin },
 ]
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-50 w-full glass-panel border-x-0 border-t-0 rounded-none">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -49,9 +49,6 @@ export function Header() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/search">Find Homes</Link>
-          </Button>
           <Button variant="cta" size="sm" asChild>
             <Link href="/search">Get Started</Link>
           </Button>
@@ -67,8 +64,8 @@ export function Header() {
           <SheetContent side="right" className="w-[300px] sm:w-[350px] border-l border-slate-200">
             <div className="flex flex-col gap-6 pt-6">
               {/* Mobile Logo */}
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="flex items-center gap-3"
                 onClick={() => setIsOpen(false)}
               >
@@ -98,11 +95,6 @@ export function Header() {
 
               {/* Mobile CTA */}
               <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-slate-100">
-                <Button variant="outline" asChild>
-                  <Link href="/search" onClick={() => setIsOpen(false)}>
-                    Find Homes
-                  </Link>
-                </Button>
                 <Button variant="cta" asChild>
                   <Link href="/search" onClick={() => setIsOpen(false)}>
                     Get Started

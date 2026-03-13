@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { generateBreadcrumbSchema } from '@/components/seo/JsonLd'
-import { POPULAR_STATES, APP_NAME, APP_URL } from '@/lib/constants'
-import { 
-  MapPin, 
-  Building2, 
-  Home, 
-  Phone, 
-  Mail, 
+import { US_STATES, APP_NAME, APP_URL } from '@/lib/constants'
+import { createClient } from '@/lib/supabase/server'
+import {
+  MapPin,
+  Building2,
+  Home,
+  Phone,
+  Mail,
   Globe,
   Star,
   CheckCircle2,
@@ -30,15 +31,15 @@ interface BuilderPageProps {
 // Generate metadata for the page
 export async function generateMetadata({ params }: BuilderPageProps): Promise<Metadata> {
   const { state, city, builderSlug } = await params
-  const stateInfo = POPULAR_STATES.find(s => s.slug === state.toLowerCase())
-  
+  const stateInfo = US_STATES.find(s => s.slug === state.toLowerCase())
+
   if (!stateInfo) {
     return {}
   }
 
   const cityName = city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const builderName = builderSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  
+
   const title = `${builderName} New Homes in ${cityName}, ${stateInfo.code} | ${APP_NAME}`
   const description = `View ${builderName} new construction homes and communities in ${cityName}, ${stateInfo.name}. Browse floor plans, pricing, and schedule a tour.`
 
@@ -63,134 +64,21 @@ export async function generateMetadata({ params }: BuilderPageProps): Promise<Me
   }
 }
 
-// Sample builder data (will come from Supabase)
-const builderData = {
-  name: 'Lennar',
-  slug: 'lennar',
-  description: 'Lennar is one of the nation\'s leading homebuilders, providing quality new homes for families across the country. With innovative floor plans and the Everything\'s Included® program, Lennar makes home buying simple and transparent.',
-  founded: 1954,
-  headquarters: 'Miami, FL',
-  rating: 4.5,
-  reviewCount: 2847,
-  website: 'https://www.lennar.com',
-  phone: '(555) 123-4567',
-  email: 'info@lennar.com',
-  isVerified: true,
-  specialties: ['Single Family', 'Townhomes', 'Active Adult'],
-  features: [
-    'Everything\'s Included® - upgrades included at no extra cost',
-    'Wi-Fi CERTIFIED™ home design',
-    'Energy-efficient construction',
-    'Smart home technology included',
-    'Home warranty included',
-  ],
+// Data will be fetched from Supabase within the component
+
+interface MarketCount {
+  city: string
+  state_code: string
+  community_count: number
 }
-
-// Sample communities (will come from Supabase)
-const communities = [
-  {
-    id: '1',
-    name: 'Willow Creek Estates',
-    address: '1234 Willow Creek Blvd',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78701',
-    priceRange: '$350K - $550K',
-    minPrice: 350000,
-    maxPrice: 550000,
-    beds: '3-5',
-    baths: '2-4',
-    sqft: '1,800 - 3,200',
-    homesAvailable: 12,
-    image: '/placeholder-community.jpg',
-    status: 'selling',
-    amenities: ['Pool', 'Gated Entry', 'Playground', 'Walking Trails'],
-    schoolDistrict: 'Austin ISD',
-  },
-  {
-    id: '2',
-    name: 'Highland Grove',
-    address: '5678 Highland Ave',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78702',
-    priceRange: '$425K - $625K',
-    minPrice: 425000,
-    maxPrice: 625000,
-    beds: '4-6',
-    baths: '3-5',
-    sqft: '2,400 - 4,000',
-    homesAvailable: 8,
-    image: '/placeholder-community.jpg',
-    status: 'selling',
-    amenities: ['Clubhouse', 'Fitness Center', 'Dog Park', 'Lake Access'],
-    schoolDistrict: 'Lake Travis ISD',
-  },
-  {
-    id: '3',
-    name: 'Meadowbrook Crossing',
-    address: '9012 Meadowbrook Ln',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78703',
-    priceRange: '$295K - $425K',
-    minPrice: 295000,
-    maxPrice: 425000,
-    beds: '3-4',
-    baths: '2-3',
-    sqft: '1,500 - 2,400',
-    homesAvailable: 15,
-    image: '/placeholder-community.jpg',
-    status: 'coming_soon',
-    amenities: ['Park', 'Community Garden'],
-    schoolDistrict: 'Round Rock ISD',
-  },
-]
-
-// Sample floor plans (will come from Supabase)
-const floorPlans = [
-  {
-    id: '1',
-    name: 'The Hamilton',
-    beds: 4,
-    baths: 3,
-    sqft: 2450,
-    stories: 2,
-    garage: 2,
-    basePrice: 425000,
-    image: '/placeholder-floorplan.jpg',
-  },
-  {
-    id: '2',
-    name: 'The Windsor',
-    beds: 5,
-    baths: 4,
-    sqft: 3200,
-    stories: 2,
-    garage: 3,
-    basePrice: 575000,
-    image: '/placeholder-floorplan.jpg',
-  },
-  {
-    id: '3',
-    name: 'The Charleston',
-    beds: 3,
-    baths: 2.5,
-    sqft: 2100,
-    stories: 1,
-    garage: 2,
-    basePrice: 385000,
-    image: '/placeholder-floorplan.jpg',
-  },
-]
 
 export default async function BuilderPage({ params }: BuilderPageProps) {
   const { state, city, builderSlug } = await params
   const stateSlug = state.toLowerCase()
   const citySlug = city.toLowerCase()
-  
+
   // Validate state
-  const stateInfo = POPULAR_STATES.find(s => s.slug === stateSlug)
+  const stateInfo = US_STATES.find(s => s.slug === stateSlug)
   if (!stateInfo) {
     notFound()
   }
@@ -198,6 +86,42 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
   const cityName = citySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const builderName = builderSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const pageUrl = `${APP_URL}/${stateInfo.slug}/${citySlug}/${builderSlug}`
+
+  const supabase = await createClient()
+
+  // Fetch the builder details
+  const { data: builderRaw } = await supabase
+    .from('builders')
+    .select('*')
+    .eq('slug', builderSlug)
+    .single()
+
+  if (!builderRaw) {
+    notFound()
+  }
+
+  const builderData: any = builderRaw
+
+  // Fetch communities for this builder in this specific city
+  const { data: communitiesData } = await supabase
+    .from('communities')
+    .select('*')
+    .eq('builder_id', builderData.id)
+    .ilike('city', cityName)
+    .or(`state.ilike.${stateInfo.name},state_code.ilike.${stateInfo.code},state.ilike.${stateInfo.code}`)
+
+  const communities = communitiesData || []
+
+  // Fetch all markets this builder operates in
+  const { data: marketsData } = await supabase
+    .from('market_builder_stats')
+    .select('city, state_code, community_count')
+    .eq('builder_id', builderData.id)
+    .order('community_count', { ascending: false })
+
+  const builderMarkets: MarketCount[] = marketsData || []
+
+  const floorPlans: any[] = [] // Fetch from homes if modeled
 
   // Generate structured data
   const breadcrumbData = generateBreadcrumbSchema([
@@ -210,7 +134,7 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
   return (
     <>
       <JsonLd data={breadcrumbData} />
-      
+
       <div className="min-h-screen bg-slate-50">
         {/* Builder Header */}
         <section className="bg-white border-b">
@@ -242,28 +166,47 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                   <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
                     {builderName}
                   </h1>
-                  {builderData.isVerified && (
+                  {builderData.is_verified && (
                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
                       <CheckCircle2 className="h-3 w-3 mr-1" /> Verified Builder
                     </Badge>
                   )}
                 </div>
-                
+
                 <p className="text-slate-600 mb-4 max-w-2xl">
                   {builderData.description}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm">
+                <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                    <span className="font-medium">{builderData.rating}</span>
-                    <span className="text-slate-500">({builderData.reviewCount.toLocaleString()} reviews)</span>
+                    <span className="font-medium">{builderData.rating || 'New'}</span>
+                    <span className="text-slate-500">({(builderData.review_count || 0).toLocaleString()} reviews)</span>
                   </div>
                   <span className="text-slate-300">|</span>
-                  <span className="text-slate-600">Est. {builderData.founded}</span>
+                  <span className="text-slate-600">Est. {builderData.year_founded || 'Unknown'}</span>
                   <span className="text-slate-300">|</span>
-                  <span className="text-slate-600">{builderData.headquarters}</span>
+                  <span className="text-slate-600">{builderData.headquarters || 'Various Locations'}</span>
                 </div>
+
+                {/* Operating Markets */}
+                {builderMarkets.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-2">Builds in these markets:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {builderMarkets.map((market, idx) => (
+                        <Link
+                          key={idx}
+                          href={`/${stateSlug}/${market.city.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          <Badge variant="outline" className="hover:bg-slate-100 transition-colors cursor-pointer">
+                            {market.city}, {market.state_code} ({market.community_count})
+                          </Badge>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Contact CTA */}
@@ -274,7 +217,7 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                 <Button variant="outline">
                   <Mail className="h-4 w-4 mr-2" /> Email
                 </Button>
-                <a 
+                <a
                   href={builderData.website}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -300,69 +243,77 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
               {/* Communities Tab */}
               <TabsContent value="communities" className="space-y-6">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {communities.map((community) => (
+                  {communities.map((community: any) => (
                     <Card key={community.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       <div className="relative h-48 bg-slate-200 flex items-center justify-center">
-                        <Building2 className="h-12 w-12 text-slate-400" />
-                        <Badge 
-                          className={`absolute top-3 left-3 ${
-                            community.status === 'selling' ? 'bg-emerald-600' : 'bg-amber-500'
-                          }`}
+                        {community.images?.[0] ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={community.images[0]} alt={community.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Building2 className="h-12 w-12 text-slate-400" />
+                        )}
+                        <Badge
+                          className={`absolute top-3 left-3 ${community.status === 'selling' ? 'bg-emerald-600' : 'bg-amber-500'
+                            }`}
                         >
                           {community.status === 'selling' ? 'Now Selling' : 'Coming Soon'}
                         </Badge>
                       </div>
-                      
+
                       <CardHeader className="pb-2">
                         <CardTitle className="text-lg">{community.name}</CardTitle>
                         <CardDescription className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {community.address}, {community.city}, {community.state} {community.zipCode}
+                          {community.address || community.city}, {community.state_code} {community.zip_code || ''}
                         </CardDescription>
                       </CardHeader>
-                      
+
                       <CardContent className="space-y-3">
                         <p className="text-xl font-semibold text-slate-900">
-                          {community.priceRange}
+                          {community.min_price || community.max_price
+                            ? `$${(community.min_price || 0).toLocaleString()} ${community.max_price ? `- $${community.max_price.toLocaleString()}` : '+'}`
+                            : 'Pricing Unavailable'}
                         </p>
-                        
+
                         <div className="flex items-center gap-4 text-sm text-slate-600">
                           <span className="flex items-center gap-1">
-                            <BedDouble className="h-4 w-4" /> {community.beds}
+                            <BedDouble className="h-4 w-4" /> {community.min_bedrooms ? `${community.min_bedrooms}-${community.max_bedrooms || community.min_bedrooms}` : 'N/A'}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Bath className="h-4 w-4" /> {community.baths}
+                            <Bath className="h-4 w-4" /> {community.min_bathrooms ? `${community.min_bathrooms}-${community.max_bathrooms || community.min_bathrooms}` : 'N/A'}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Maximize className="h-4 w-4" /> {community.sqft}
+                            <Maximize className="h-4 w-4" /> {community.min_sqft ? `${community.min_sqft.toLocaleString()}+ sqft` : 'N/A'}
                           </span>
                         </div>
 
                         <div className="text-sm text-slate-500">
-                          <span className="font-medium">{community.homesAvailable}</span> homes available
+                          <span className="font-medium">{community.home_count || 0}</span> homes available
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5">
-                          {community.amenities.slice(0, 3).map((amenity) => (
-                            <Badge key={amenity} variant="secondary" className="text-xs">
-                              {amenity}
+                        <div className="flex flex-wrap gap-1.5 pt-2">
+                          {(community.amenities || []).slice(0, 3).map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
                             </Badge>
                           ))}
-                          {community.amenities.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{community.amenities.length - 3} more
-                            </Badge>
-                          )}
                         </div>
                       </CardContent>
 
                       <CardFooter>
-                        <Button className="w-full" variant="outline">
-                          View Community
+                        <Button className="w-full" variant="outline" asChild>
+                          <Link href={`/${stateSlug}/${citySlug}/${builderSlug}/${community.slug}`}>
+                            View Community
+                          </Link>
                         </Button>
                       </CardFooter>
                     </Card>
                   ))}
+                  {communities.length === 0 && (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-slate-500">No communities available for this builder in {cityName} right now.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -374,12 +325,12 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                       <div className="relative h-48 bg-slate-200 flex items-center justify-center">
                         <Home className="h-12 w-12 text-slate-400" />
                       </div>
-                      
+
                       <CardHeader className="pb-2">
                         <CardTitle className="text-lg">{plan.name}</CardTitle>
                         <CardDescription>Starting at ${plan.basePrice.toLocaleString()}</CardDescription>
                       </CardHeader>
-                      
+
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div className="text-center p-3 bg-slate-50 rounded-lg">
@@ -424,8 +375,8 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                       {builderData.description}
                     </p>
                     <p className="text-slate-600">
-                      Founded in {builderData.founded}, {builderName} has been dedicated to building 
-                      quality homes and strong communities. With a commitment to innovation and 
+                      Founded in {builderData.year_founded || 'the past'}, {builderName} has been dedicated to building
+                      quality homes and strong communities. With a commitment to innovation and
                       customer satisfaction, they continue to be a leader in the homebuilding industry.
                     </p>
                   </div>
@@ -433,7 +384,7 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Why Choose {builderName}</h3>
                     <ul className="space-y-3">
-                      {builderData.features.map((feature, index) => (
+                      {(builderData.features || []).map((feature: string, index: number) => (
                         <li key={index} className="flex items-start gap-2">
                           <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                           <span className="text-slate-600">{feature}</span>
@@ -448,7 +399,7 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                   <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-slate-500">Founded</p>
-                      <p className="font-medium">{builderData.founded}</p>
+                      <p className="font-medium">{builderData.year_founded || 'Unknown'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Headquarters</p>
@@ -456,13 +407,13 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Specialties</p>
-                      <p className="font-medium">{builderData.specialties.join(', ')}</p>
+                      <p className="font-medium">{(builderData.specialties || []).join(', ')}</p>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Rating</p>
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                        <span className="font-medium">{builderData.rating}/5</span>
+                        <span className="font-medium">{builderData.rating || 'N/A'}/5</span>
                       </div>
                     </div>
                   </div>

@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BuilderCard } from '@/components/builders/BuilderCard'
 import { BuildersFilter } from '@/components/builders/BuildersFilter'
-import { POPULAR_STATES, APP_NAME, APP_DESCRIPTION } from '@/lib/constants'
-import { 
-  Building2, 
-  MapPin, 
-  Star, 
+import { US_STATES, APP_NAME, APP_DESCRIPTION } from '@/lib/constants'
+import { createClient } from '@/lib/supabase/server'
+import {
+  Building2,
+  MapPin,
+  Star,
   TrendingUp,
   Search,
   Award,
@@ -35,184 +36,7 @@ export const metadata: Metadata = {
   },
 }
 
-// Sample builder data (will come from Supabase)
-// LGI Homes and Terrata Homes are always featured builders
-const sampleBuilders = [
-  {
-    id: 'lgi-homes',
-    name: 'LGI Homes',
-    slug: 'lgi-homes',
-    description: 'LGI Homes specializes in providing affordable, move-in ready homes with all the upgrades included. With a focus on first-time and move-up buyers, LGI Homes builds quality communities across the nation.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.4,
-    reviewCount: 1856,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'The Woodlands, TX',
-    yearFounded: 2003,
-    homesBuilt: 45000,
-    communitiesCount: 95,
-    activeMarkets: ['TX', 'FL', 'AZ', 'GA', 'NC', 'SC', 'TN', 'CO', 'NV'],
-    specialties: ['Affordable Homes', 'Move-In Ready', 'All-Inclusive Pricing'],
-    priceRange: { min: 200000, max: 450000, label: '$200K - $450K' },
-    featuredCommunities: [
-      { name: 'The Meadows', city: 'Houston', state: 'TX', image: '/placeholder-community.jpg' },
-      { name: 'Cypress Creek', city: 'Orlando', state: 'FL', image: '/placeholder-community.jpg' },
-    ],
-    alwaysFeatured: true,
-  },
-  {
-    id: 'terrata-homes',
-    name: 'Terrata Homes',
-    slug: 'terrata-homes',
-    description: 'Terrata Homes builds thoughtfully designed communities with a focus on modern living, sustainability, and community amenities. Their homes blend contemporary architecture with functional family spaces.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.5,
-    reviewCount: 892,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'Austin, TX',
-    yearFounded: 2012,
-    homesBuilt: 8500,
-    communitiesCount: 28,
-    activeMarkets: ['TX', 'AZ', 'CO', 'FL'],
-    specialties: ['Modern Design', 'Sustainable Building', 'Community Focused'],
-    priceRange: { min: 350000, max: 750000, label: '$350K - $750K' },
-    featuredCommunities: [
-      { name: 'Terrata at Copperleaf', city: 'Austin', state: 'TX', image: '/placeholder-community.jpg' },
-      { name: 'Terrata at Sky Ridge', city: 'Phoenix', state: 'AZ', image: '/placeholder-community.jpg' },
-    ],
-    alwaysFeatured: true,
-  },
-  {
-    id: 'taylor-morrison',
-    name: 'Taylor Morrison',
-    slug: 'taylor-morrison',
-    description: 'Taylor Morrison is a leading national homebuilder and developer, recognized as America\'s Most Trusted® National Builder.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.7,
-    reviewCount: 2847,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'Scottsdale, AZ',
-    yearFounded: 1936,
-    homesBuilt: 150000,
-    communitiesCount: 340,
-    activeMarkets: ['AZ', 'CA', 'TX', 'FL', 'CO', 'NC'],
-    specialties: ['Single Family', 'Active Adult', 'Luxury'],
-    priceRange: { min: 350000, max: 1200000, label: '$350K - $1.2M' },
-    featuredCommunities: [
-      { name: 'The Oaks at Mueller', city: 'Austin', state: 'TX', image: '/placeholder-community.jpg' },
-      { name: 'Highland Grove', city: 'Phoenix', state: 'AZ', image: '/placeholder-community.jpg' },
-    ],
-  },
-  {
-    id: 'lennar',
-    name: 'Lennar',
-    slug: 'lennar',
-    description: 'One of the nation\'s leading homebuilders, providing beautifully crafted homes with Everything\'s Included® features.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.5,
-    reviewCount: 5234,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'Miami, FL',
-    yearFounded: 1954,
-    homesBuilt: 250000,
-    communitiesCount: 520,
-    activeMarkets: ['FL', 'TX', 'CA', 'AZ', 'NV', 'NC', 'SC', 'GA'],
-    specialties: ['Single Family', 'Townhomes', 'Everything\'s Included®'],
-    priceRange: { min: 280000, max: 900000, label: '$280K - $900K' },
-    featuredCommunities: [
-      { name: 'Sunset Ridge', city: 'Austin', state: 'TX', image: '/placeholder-community.jpg' },
-      { name: 'Alvadora', city: 'Overland Park', state: 'KS', image: '/placeholder-community.jpg' },
-    ],
-  },
-  {
-    id: 'dr-horton',
-    name: 'DR Horton',
-    slug: 'dr-horton',
-    description: 'America\'s largest homebuilder by volume, offering quality homes at affordable prices across 33 states.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.3,
-    reviewCount: 3892,
-    isVerified: true,
-    isPremium: false,
-    headquarters: 'Arlington, TX',
-    yearFounded: 1978,
-    homesBuilt: 800000,
-    communitiesCount: 890,
-    activeMarkets: ['TX', 'FL', 'AZ', 'NC', 'SC', 'TN', 'CO'],
-    specialties: ['Single Family', 'Express Homes', 'Affordable'],
-    priceRange: { min: 220000, max: 650000, label: '$220K - $650K' },
-    featuredCommunities: [
-      { name: 'Bridgeland', city: 'Cypress', state: 'TX', image: '/placeholder-community.jpg' },
-    ],
-  },
-  {
-    id: 'pulte-homes',
-    name: 'Pulte Homes',
-    slug: 'pulte-homes',
-    description: 'Builds quality new homes with innovative designs and energy-efficient features for every stage of life.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.6,
-    reviewCount: 2156,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'Atlanta, GA',
-    yearFounded: 1950,
-    homesBuilt: 600000,
-    communitiesCount: 280,
-    activeMarkets: ['FL', 'TX', 'AZ', 'GA', 'NC', 'SC', 'TN'],
-    specialties: ['Single Family', 'Del Webb 55+', 'Life Tested®'],
-    priceRange: { min: 300000, max: 850000, label: '$300K - $850K' },
-    featuredCommunities: [
-      { name: 'Village Farms', city: 'Frisco', state: 'TX', image: '/placeholder-community.jpg' },
-    ],
-  },
-  {
-    id: 'toll-brothers',
-    name: 'Toll Brothers',
-    slug: 'toll-brothers',
-    description: 'America\'s Luxury Home Builder, creating communities with distinctive architecture and exceptional quality.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.8,
-    reviewCount: 1823,
-    isVerified: true,
-    isPremium: true,
-    headquarters: 'Horsham, PA',
-    yearFounded: 1967,
-    homesBuilt: 120000,
-    communitiesCount: 145,
-    activeMarkets: ['CA', 'TX', 'FL', 'AZ', 'CO', 'NC', 'NV'],
-    specialties: ['Luxury', 'Single Family', 'Active Adult'],
-    priceRange: { min: 600000, max: 2500000, label: '$600K - $2.5M' },
-    featuredCommunities: [
-      { name: 'The Enclave', city: 'Scottsdale', state: 'AZ', image: '/placeholder-community.jpg' },
-    ],
-  },
-  {
-    id: 'kb-home',
-    name: 'KB Home',
-    slug: 'kb-home',
-    description: 'Builds personalized new homes with a focus on energy efficiency and customer choice.',
-    logo: '/placeholder-builder.svg',
-    rating: 4.2,
-    reviewCount: 1654,
-    isVerified: true,
-    isPremium: false,
-    headquarters: 'Los Angeles, CA',
-    yearFounded: 1957,
-    homesBuilt: 650000,
-    communitiesCount: 210,
-    activeMarkets: ['CA', 'TX', 'AZ', 'NV', 'FL', 'NC'],
-    specialties: ['Personalized Homes', 'Energy Efficient', 'First-Time Buyer'],
-    priceRange: { min: 250000, max: 750000, label: '$250K - $750K' },
-    featuredCommunities: [
-      { name: 'Desert Ridge', city: 'Phoenix', state: 'AZ', image: '/placeholder-community.jpg' },
-    ],
-  },
-]
+// We will fetch builders from Supabase in the component
 
 // Stats for the page
 const stats = [
@@ -222,19 +46,6 @@ const stats = [
   { icon: Star, value: '4.5', label: 'Avg. Rating' },
 ]
 
-// Filter options
-const marketOptions = [
-  { label: 'Arizona', value: 'AZ', count: 12 },
-  { label: 'California', value: 'CA', count: 15 },
-  { label: 'Colorado', value: 'CO', count: 8 },
-  { label: 'Florida', value: 'FL', count: 18 },
-  { label: 'Georgia', value: 'GA', count: 9 },
-  { label: 'North Carolina', value: 'NC', count: 11 },
-  { label: 'Nevada', value: 'NV', count: 6 },
-  { label: 'South Carolina', value: 'SC', count: 7 },
-  { label: 'Tennessee', value: 'TN', count: 5 },
-  { label: 'Texas', value: 'TX', count: 22 },
-]
 
 const communityTypeOptions = [
   { label: 'Single Family', value: 'single-family' },
@@ -259,7 +70,147 @@ const builderSizeOptions = [
   { label: 'Local (1-4 states)', value: 'local' },
 ]
 
-export default function BuildersDirectoryPage() {
+function safeArray(arr: any): any[] {
+  if (!arr) return []
+  return Array.isArray(arr) ? arr : [arr]
+}
+
+export default async function BuildersDirectoryPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const searchParams = await props.searchParams
+  const selectedMarkets = typeof searchParams.market === 'string' ? searchParams.market.split(',') : []
+  const selectedTypes = typeof searchParams.type === 'string' ? searchParams.type.split(',') : []
+  const selectedPrices = typeof searchParams.price === 'string' ? searchParams.price.split(',') : []
+  const selectedSizes = typeof searchParams.size === 'string' ? searchParams.size.split(',') : []
+  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
+
+  const supabase = await createClient()
+  const { data: builders } = await supabase
+    .from('builders')
+    .select('*, communities(*), builder_markets(*)')
+    .order('name')
+
+  const builderData: any[] = builders || []
+
+  const marketCounts = new Map<string, number>()
+  builderData.forEach(b => {
+    const rawCommunities = safeArray(b.communities)
+    const rawBuilderMarkets = safeArray(b.builder_markets)
+    
+    // Get unique state codes from communities + builder_markets
+    const statesFromCommunities = rawCommunities.map((c: any) => (c.state_code || c.state || '').toUpperCase())
+    const statesFromBuilderMarkets = rawBuilderMarkets.map((m: any) => (m.state_code || '').toUpperCase())
+    
+    const activeMarkets = Array.from(new Set([...statesFromCommunities, ...statesFromBuilderMarkets])).filter(Boolean) as string[]
+    
+    activeMarkets.forEach((m: string) => {
+      marketCounts.set(m, (marketCounts.get(m) || 0) + 1)
+    })
+  })
+
+  // Then construct dynamicMarketOptions dynamically based on US_STATES
+  const dynamicMarketOptions = US_STATES
+    .filter(state => marketCounts.has(state.code.toUpperCase()))
+    .map(state => ({
+      label: state.name,
+      value: state.code.toUpperCase(),
+      slug: state.slug,
+      count: marketCounts.get(state.code.toUpperCase()) || 0
+    }))
+    .sort((a, b) => b.count - a.count)
+
+  let displayBuilders = builderData.map(b => {
+    const rawCommunities = safeArray(b.communities)
+    const rawBuilderMarkets = safeArray(b.builder_markets)
+    
+    const statesFromCommunities = rawCommunities.map((c: any) => (c.state_code || c.state || '').toUpperCase())
+    const statesFromBuilderMarkets = rawBuilderMarkets.map((m: any) => (m.state_code || '').toUpperCase())
+    
+    const activeMarkets = Array.from(new Set([...statesFromCommunities, ...statesFromBuilderMarkets])).filter(Boolean).sort()
+
+    let minPrice = Infinity
+    let maxPrice = 0
+    rawCommunities.forEach((c: any) => {
+      if (c.min_price && c.min_price < minPrice) minPrice = c.min_price
+      if (c.max_price && c.max_price > maxPrice) maxPrice = c.max_price
+    })
+
+    const validPrices = minPrice !== Infinity
+    const priceRangeLabel = validPrices
+      ? `$${(minPrice / 1000).toFixed(0)}k - $${(maxPrice / 1000).toFixed(0)}k`
+      : 'Pricing TBD'
+
+    const communitiesCount = rawCommunities.length
+    const homesBuilt = rawCommunities.reduce((sum: number, c: any) => sum + (c.total_homes || c.home_count || 0), 0)
+    const specialties = Array.from(new Set(rawCommunities.flatMap((c: any) => c.home_types || []))).slice(0, 3)
+
+    return {
+      ...b,
+      reviewCount: b.review_count,
+      isVerified: b.is_verified,
+      isPremium: b.is_premium,
+      yearFounded: b.year_founded,
+      homesBuilt,
+      communitiesCount,
+      activeMarkets,
+      specialties,
+      priceRange: {
+        min: validPrices ? minPrice : 0,
+        max: validPrices ? maxPrice : 0,
+        label: priceRangeLabel
+      },
+      featuredCommunities: [], // Add real communities here later if needed
+      logo: b.logo_url || '/placeholder-builder.svg',
+    }
+  })
+
+  // Apply filters in-memory
+  if (selectedMarkets.length > 0) {
+    displayBuilders = displayBuilders.filter(b =>
+      b.activeMarkets.some((m: string) => selectedMarkets.includes(m))
+    )
+  }
+
+  if (selectedTypes.length > 0) {
+    displayBuilders = displayBuilders.filter(b =>
+      b.specialties.some((s: string) => selectedTypes.includes(s.toLowerCase().replace(/\\s+/g, '-')))
+    )
+  }
+
+  if (selectedPrices.length > 0) {
+    displayBuilders = displayBuilders.filter(b => {
+      return selectedPrices.some(priceKey => {
+        const [minStr, maxStr] = priceKey.split('-')
+        const filterMin = parseInt(minStr) || 0
+        const filterMax = maxStr !== 'null' ? parseInt(maxStr) : Infinity
+        // Check for overlap between builder price range and filter range
+        return b.priceRange.min <= filterMax && b.priceRange.max >= filterMin
+      })
+    })
+  }
+
+  const ITEMS_PER_PAGE = 12
+  const totalResults = displayBuilders.length
+  const totalPages = Math.max(1, Math.ceil(totalResults / ITEMS_PER_PAGE))
+  const paginatedBuilders = displayBuilders.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+
+  const buildQueryString = (updates: Record<string, string | null>) => {
+    const newParams = new URLSearchParams()
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (typeof v === 'string') newParams.set(k, v)
+      else if (Array.isArray(v)) newParams.set(k, v[0])
+    })
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v === null) newParams.delete(k)
+      else newParams.set(k, v)
+    })
+    return newParams.toString()
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const isAdmin = !!user
+
   return (
     <>
       <JsonLd data={{
@@ -270,7 +221,7 @@ export default function BuildersDirectoryPage() {
         url: 'https://newhomessection.com/builders',
         mainEntity: {
           '@type': 'ItemList',
-          itemListElement: sampleBuilders.map((builder, index) => ({
+          itemListElement: displayBuilders.map((builder, index) => ({
             '@type': 'ListItem',
             position: index + 1,
             item: {
@@ -297,7 +248,7 @@ export default function BuildersDirectoryPage() {
                 <span className="block text-emerald-400">Home Builders</span>
               </h1>
               <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-                Browse top-rated builders, explore their communities, and find the perfect 
+                Browse top-rated builders, explore their communities, and find the perfect
                 partner for your new home journey. From national names to local experts.
               </p>
 
@@ -350,28 +301,32 @@ export default function BuildersDirectoryPage() {
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Filters Sidebar */}
               <aside className="lg:w-64 flex-shrink-0">
-                <div className="sticky top-24 space-y-4">
-                  <BuildersFilter 
+                <div className="sticky top-24 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 pb-4">
+                  <BuildersFilter
                     title="Markets"
-                    options={marketOptions.map(m => ({ ...m, checked: false }))}
+                    options={dynamicMarketOptions.map(m => ({ ...m, checked: selectedMarkets.includes(m.value) }))}
                     type="checkbox"
+                    searchParamKey="market"
                   />
-                  <BuildersFilter 
+                  <BuildersFilter
                     title="Community Types"
-                    options={communityTypeOptions.map(t => ({ label: t.label, value: t.value, checked: false }))}
+                    options={communityTypeOptions.map(t => ({ label: t.label, value: t.value, checked: selectedTypes.includes(t.value) }))}
                     type="checkbox"
+                    searchParamKey="type"
                   />
-                  <BuildersFilter 
+                  <BuildersFilter
                     title="Price Range"
-                    options={priceRangeOptions.map(p => ({ label: p.label, value: `${p.min}-${p.max}`, checked: false }))}
+                    options={priceRangeOptions.map(p => ({ label: p.label, value: `${p.min}-${p.max}`, checked: selectedPrices.includes(`${p.min}-${p.max}`) }))}
                     type="checkbox"
+                    searchParamKey="price"
                   />
-                  <BuildersFilter 
+                  <BuildersFilter
                     title="Builder Size"
-                    options={builderSizeOptions.map(s => ({ ...s, checked: false }))}
+                    options={builderSizeOptions.map(s => ({ ...s, checked: selectedSizes.includes(s.value) }))}
                     type="radio"
+                    searchParamKey="size"
                   />
-                  
+
                   <Card className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-0">
                     <CardContent className="p-4">
                       <Award className="h-8 w-8 mb-2 text-emerald-200" />
@@ -396,7 +351,7 @@ export default function BuildersDirectoryPage() {
                       All Builders
                     </h2>
                     <p className="text-sm text-slate-500">
-                      Showing {sampleBuilders.length} builders
+                      Showing {displayBuilders.length} builders
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -412,33 +367,39 @@ export default function BuildersDirectoryPage() {
 
                 {/* Builder Cards Grid */}
                 <div className="space-y-4">
-                  {sampleBuilders.map((builder) => (
-                    <BuilderCard key={builder.id} builder={builder} />
+                  {paginatedBuilders.map((builder) => (
+                    <BuilderCard
+                      key={builder.id}
+                      builder={builder}
+                      isAdmin={isAdmin}
+                    />
                   ))}
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-8 flex items-center justify-center gap-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700">
-                    1
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    2
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    3
-                  </Button>
-                  <span className="text-slate-400">...</span>
-                  <Button variant="outline" size="sm">
-                    8
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
+                {totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-center gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
+                      {page > 1 ? (
+                        <Link scroll={false} href={`/builders?${buildQueryString({ page: String(page - 1) })}`}>Previous</Link>
+                      ) : (
+                        <span>Previous</span>
+                      )}
+                    </Button>
+
+                    <span className="text-sm text-slate-500 px-4">
+                      Page {page} of {totalPages}
+                    </span>
+
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>
+                      {page < totalPages ? (
+                        <Link scroll={false} href={`/builders?${buildQueryString({ page: String(page + 1) })}`}>Next</Link>
+                      ) : (
+                        <span>Next</span>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -456,16 +417,16 @@ export default function BuildersDirectoryPage() {
                 Browse Builders by Market
               </h2>
               <p className="text-slate-600">
-                Find top builders in your desired location. Explore communities 
+                Find top builders in your desired location. Explore communities
                 across the country&apos;s hottest new home markets.
               </p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {marketOptions.slice(0, 10).map((market) => (
+              {dynamicMarketOptions.slice(0, 10).map((market) => (
                 <Link
                   key={market.value}
-                  href={`/markets/${market.value.toLowerCase()}/builders`}
+                  href={`/markets/${market.slug}/builders`}
                   className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
                 >
                   <span className="font-medium text-slate-700 group-hover:text-emerald-700">
@@ -478,13 +439,7 @@ export default function BuildersDirectoryPage() {
               ))}
             </div>
 
-            <div className="text-center mt-8">
-              <Button variant="outline" asChild>
-                <Link href="#">
-                  View All Markets <ArrowRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
+
           </div>
         </section>
 
@@ -496,7 +451,7 @@ export default function BuildersDirectoryPage() {
                 Why Choose Our Builders?
               </h2>
               <p className="text-slate-400">
-                Every builder in our directory is vetted for quality, reliability, 
+                Every builder in our directory is vetted for quality, reliability,
                 and customer satisfaction.
               </p>
             </div>

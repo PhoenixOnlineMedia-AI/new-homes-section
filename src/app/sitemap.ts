@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { APP_URL, POPULAR_STATES } from '@/lib/constants'
+import { APP_URL, US_STATES } from '@/lib/constants'
 
 // Sample cities for sitemap (will come from Supabase in production)
 const sampleCities = [
@@ -63,7 +63,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ]
 
   // Add state pages
-  POPULAR_STATES.forEach((state) => {
+  US_STATES.forEach((state) => {
     routes.push({
       url: `${APP_URL}/${state.slug}/`,
       lastModified: new Date(),

@@ -45,7 +45,7 @@ export const builderTemplate: CSVTemplate = {
   requiredColumns: ['name', 'slug'],
   validationRules: [
     { column: 'name', required: true, type: 'string' },
-    { column: 'slug', required: true, type: 'string', pattern: /^[a-z0-9-]+$/ },
+    { column: 'slug', required: true, type: 'string', pattern: '^[a-z0-9-]+$' },
     { column: 'website', type: 'url' },
     { column: 'email', type: 'email' },
     { column: 'year_founded', type: 'number', min: 1800, max: new Date().getFullYear() },
@@ -111,10 +111,10 @@ export const communityTemplate: CSVTemplate = {
   validationRules: [
     { column: 'builder_slug', required: true, type: 'string' },
     { column: 'name', required: true, type: 'string' },
-    { column: 'slug', required: true, type: 'string', pattern: /^[a-z0-9-]+$/ },
+    { column: 'slug', required: true, type: 'string', pattern: '^[a-z0-9-]+$' },
     { column: 'city', required: true, type: 'string' },
     { column: 'state', required: true, type: 'string' },
-    { column: 'state_code', required: true, type: 'string', pattern: /^[A-Z]{2}$/ },
+    { column: 'state_code', required: true, type: 'string', pattern: '^[A-Z]{2}$' },
     { column: 'min_price', type: 'number', min: 0 },
     { column: 'max_price', type: 'number', min: 0 },
     { column: 'min_bedrooms', type: 'number', min: 0 },
@@ -190,9 +190,37 @@ export const homeTemplate: CSVTemplate = {
 }
 
 /**
+ * Builder Market Template
+ */
+export const builderMarketTemplate: CSVTemplate = {
+  name: 'Builder Markets',
+  description: 'Upload market-specific descriptions for builders',
+  headers: [
+    'builder_slug',
+    'city',
+    'state_code',
+    'local_description',
+    'image_url',
+  ],
+  sampleData: {
+    builder_slug: 'lennar',
+    city: 'Austin',
+    state_code: 'TX',
+    local_description: 'Building quality homes in the heart of Austin with modern amenities.',
+    image_url: 'https://example.com/austin-market-image.jpg',
+  },
+  requiredColumns: ['builder_slug', 'city', 'state_code'],
+  validationRules: [
+    { column: 'builder_slug', required: true, type: 'string', pattern: '^[a-z0-9-]+$' },
+    { column: 'city', required: true, type: 'string' },
+    { column: 'state_code', required: true, type: 'string', pattern: '^[A-Z]{2}$' },
+  ],
+}
+
+/**
  * Get template by type
  */
-export function getTemplate(type: 'builders' | 'communities' | 'homes'): CSVTemplate {
+export function getTemplate(type: 'builders' | 'communities' | 'homes' | 'builder_markets'): CSVTemplate {
   switch (type) {
     case 'builders':
       return builderTemplate
@@ -200,6 +228,8 @@ export function getTemplate(type: 'builders' | 'communities' | 'homes'): CSVTemp
       return communityTemplate
     case 'homes':
       return homeTemplate
+    case 'builder_markets':
+      return builderMarketTemplate
     default:
       throw new Error(`Unknown template type: ${type}`)
   }
@@ -213,5 +243,6 @@ export function getAllTemplates(): Record<string, CSVTemplate> {
     builders: builderTemplate,
     communities: communityTemplate,
     homes: homeTemplate,
+    builder_markets: builderMarketTemplate,
   }
 }

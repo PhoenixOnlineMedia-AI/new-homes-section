@@ -1,6 +1,6 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export default function UploadHomesPage() {
@@ -8,8 +8,8 @@ export default function UploadHomesPage() {
 
   async function uploadHomes(data: Record<string, string>[]) {
     'use server'
-    
-    const supabase = await createClient()
+
+    const supabase = createAdminClient()
     const errors: string[] = []
     let successCount = 0
 
@@ -27,6 +27,7 @@ export default function UploadHomesPage() {
       }
 
       const homeData = {
+        // @ts-ignore
         community_id: community.id,
         name: row.name || null,
         address: row.address || '',
