@@ -346,9 +346,63 @@ export type BuilderMarketUpdate = {
   updated_at?: string
 }
 
+export type MarketPageRow = {
+  id: string
+  city: string
+  state_code: string
+  city_overview: string | null
+  key_stats: string | null
+  neighborhood_breakdown: string | null
+  economy_job_market: string | null
+  schools_education: string | null
+  lifestyle_amenities: string | null
+  faqs: string | null
+  hero_image_url: string | null
+  hero_image_alt: string | null
+  source_site: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MarketPageInsert = {
+  id?: string
+  city: string
+  state_code: string
+  city_overview?: string | null
+  key_stats?: string | null
+  neighborhood_breakdown?: string | null
+  economy_job_market?: string | null
+  schools_education?: string | null
+  lifestyle_amenities?: string | null
+  faqs?: string | null
+  hero_image_url?: string | null
+  hero_image_alt?: string | null
+  source_site?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type MarketPageUpdate = {
+  id?: string
+  city?: string
+  state_code?: string
+  city_overview?: string | null
+  key_stats?: string | null
+  neighborhood_breakdown?: string | null
+  economy_job_market?: string | null
+  schools_education?: string | null
+  lifestyle_amenities?: string | null
+  faqs?: string | null
+  hero_image_url?: string | null
+  hero_image_alt?: string | null
+  source_site?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
 export type MediaAssetRow = {
   id: string
-  entity_type: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
   entity_id: string
   bucket: string
   path: string
@@ -369,7 +423,7 @@ export type MediaAssetRow = {
 
 export type MediaAssetInsert = {
   id?: string
-  entity_type: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
   entity_id: string
   bucket: string
   path: string
@@ -390,7 +444,7 @@ export type MediaAssetInsert = {
 
 export type MediaAssetUpdate = {
   id?: string
-  entity_type?: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_type?: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
   entity_id?: string
   bucket?: string
   path?: string
@@ -433,6 +487,11 @@ export interface Database {
         Insert: BuilderMarketInsert
         Update: BuilderMarketUpdate
       }
+      market_pages: {
+        Row: MarketPageRow
+        Insert: MarketPageInsert
+        Update: MarketPageUpdate
+      }
       media_assets: {
         Row: MediaAssetRow
         Insert: MediaAssetInsert
@@ -467,4 +526,5 @@ export interface Database {
 export type Builder = BuilderRow
 export type Community = CommunityRow
 export type Home = HomeRow
+export type MarketPage = MarketPageRow
 export type MediaAsset = MediaAssetRow

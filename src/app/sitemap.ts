@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { APP_URL, US_STATES } from '@/lib/constants'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Sample cities for sitemap (will come from Supabase in production)
 const sampleCities = [
@@ -12,7 +13,14 @@ const sampleCities = [
   { state: 'arizona', city: 'phoenix' },
 ]
 
-export default function sitemap(): MetadataRoute.Sitemap {
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
     // Homepage
     {
@@ -72,8 +80,41 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   })
 
+  const cityRoutes = new Map(sampleCities.map(({ state, city }) => [`${state}/${city}`, { state, city }]))
+
+  try {
+    const supabase = createAdminClient()
+    const [{ data: marketPagesData }, { data: communitiesData }] = await Promise.all([
+      supabase.from('market_pages').select('city,state_code'),
+      supabase.from('communities').select('city,state_code,state'),
+    ])
+    const marketPages = (marketPagesData || []) as unknown as { city: string | null; state_code: string | null }[]
+    const communities = (communitiesData || []) as unknown as { city: string | null; state_code: string | null; state: string | null }[]
+
+    for (const market of marketPages) {
+      const stateInfo = US_STATES.find((state) => state.code.toUpperCase() === String(market.state_code || '').toUpperCase())
+      const citySlug = toSlug(String(market.city || ''))
+      if (stateInfo && citySlug) {
+        cityRoutes.set(`${stateInfo.slug}/${citySlug}`, { state: stateInfo.slug, city: citySlug })
+      }
+    }
+
+    for (const community of communities) {
+      const stateInfo = US_STATES.find((state) => (
+        state.code.toUpperCase() === String(community.state_code || community.state || '').toUpperCase() ||
+        state.name.toUpperCase() === String(community.state || '').toUpperCase()
+      ))
+      const citySlug = toSlug(String(community.city || ''))
+      if (stateInfo && citySlug) {
+        cityRoutes.set(`${stateInfo.slug}/${citySlug}`, { state: stateInfo.slug, city: citySlug })
+      }
+    }
+  } catch {
+    // Keep the static fallback if the database is unavailable during sitemap generation.
+  }
+
   // Add city pages
-  sampleCities.forEach(({ state, city }) => {
+  cityRoutes.forEach(({ state, city }) => {
     routes.push({
       url: `${APP_URL}/${state}/${city}/`,
       lastModified: new Date(),

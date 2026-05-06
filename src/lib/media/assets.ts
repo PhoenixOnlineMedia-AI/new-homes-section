@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/database.types'
 
-export type MediaEntityType = 'builder' | 'builder_market' | 'community' | 'home'
+export type MediaEntityType = 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
 export type MediaAssetRole = 'logo' | 'hero' | 'gallery' | 'floor_plan' | 'market'
 export type MediaAssetStatus = 'pending' | 'matched' | 'approved' | 'rejected'
 
@@ -18,6 +18,7 @@ const IMAGE_CONTENT_TYPES = new Set([
 export function bucketForMedia(entityType: MediaEntityType, role: MediaAssetRole) {
   if (entityType === 'builder' && role === 'logo') return 'builder-logos'
   if (entityType === 'builder_market') return 'builder-market-media'
+  if (entityType === 'market_page') return 'market-page-media'
   if (entityType === 'community') return 'community-photos'
   if (entityType === 'home') return 'home-photos'
   return 'community-photos'
@@ -292,6 +293,16 @@ export async function syncEntityMediaUrl(
     const { error } = await supabase
       .from('builder_markets')
       .update({ image_url: options.publicUrl } as never)
+      .eq('id', options.entityId)
+
+    if (error) throw new Error(error.message)
+    return
+  }
+
+  if (options.entityType === 'market_page') {
+    const { error } = await supabase
+      .from('market_pages')
+      .update({ hero_image_url: options.publicUrl } as never)
       .eq('id', options.entityId)
 
     if (error) throw new Error(error.message)

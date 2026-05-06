@@ -15,6 +15,7 @@ type EntityOption = {
 }
 type BuilderOption = { id: string; name: string; slug: string }
 type MarketOption = { id: string; builder_id: string; city: string | null; state_code: string }
+type MarketPageOption = { id: string; city: string; state_code: string }
 type CommunityOption = { id: string; name: string; city: string; state_code: string }
 type HomeOption = { id: string; name: string | null; address: string | null }
 
@@ -43,6 +44,7 @@ function defaultRole(entityType: MediaEntityType, role: string) {
   if (role) return role as MediaAssetRole
   if (entityType === 'builder') return 'logo'
   if (entityType === 'builder_market') return 'market'
+  if (entityType === 'market_page') return 'hero'
   return 'gallery'
 }
 
@@ -56,12 +58,14 @@ export default async function AdminMediaPage() {
   const [
     { data: buildersData },
     { data: marketsData },
+    { data: marketPagesData },
     { data: communitiesData },
     { data: homesData },
     { data: mediaData },
   ] = await Promise.all([
     supabase.from('builders').select('id,name,slug').order('name'),
     supabase.from('builder_markets').select('id,builder_id,city,state_code').order('state_code'),
+    supabase.from('market_pages').select('id,city,state_code').order('state_code'),
     supabase.from('communities').select('id,name,city,state_code').order('name'),
     supabase.from('homes').select('id,name,address').order('name'),
     supabase.from('media_assets').select('*').order('created_at', { ascending: false }).limit(36),
@@ -69,6 +73,7 @@ export default async function AdminMediaPage() {
 
   const builders = (buildersData || []) as unknown as BuilderOption[]
   const markets = (marketsData || []) as unknown as MarketOption[]
+  const marketPages = (marketPagesData || []) as unknown as MarketPageOption[]
   const communities = (communitiesData || []) as unknown as CommunityOption[]
   const homes = (homesData || []) as unknown as HomeOption[]
   const builderNameById = new Map(builders.map((builder) => [builder.id, builder.name]))
@@ -82,6 +87,11 @@ export default async function AdminMediaPage() {
       value: `builder_market:${market.id}`,
       label: `Market: ${builderNameById.get(market.builder_id) || 'Builder'} - ${market.city || 'State-wide'}, ${market.state_code}`,
       type: 'builder_market' as const,
+    })),
+    ...marketPages.map((marketPage) => ({
+      value: `market_page:${marketPage.id}`,
+      label: `Market Page: ${marketPage.city}, ${marketPage.state_code}`,
+      type: 'market_page' as const,
     })),
     ...communities.map((community) => ({
       value: `community:${community.id}`,

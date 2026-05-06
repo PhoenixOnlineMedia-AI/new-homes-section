@@ -58,7 +58,7 @@ export function parseCSV(content: string, options: CSVParseOptions = {}): CSVPar
   }
 
   // Parse headers (first line)
-  const headers = parseLine(lines[0], trimValues)
+  const headers = parseLine(lines[0].replace(/^\uFEFF/, ''), trimValues)
 
   // Check for required columns
   for (const col of requiredColumns) {

@@ -9,14 +9,20 @@ import { generateBreadcrumbSchema, generatePlaceSchema } from '@/components/seo/
 import { BuilderCard } from '@/components/builders/BuilderCard'
 import { US_STATES, APP_NAME, APP_URL } from '@/lib/constants'
 import {
-  MapPin,
   Building2,
   Home,
   ArrowRight,
   BedDouble,
   Bath,
   Maximize,
-  School
+  School,
+  BarChart3,
+  BriefcaseBusiness,
+  GraduationCap,
+  HelpCircle,
+  Map,
+  Sparkles,
+  Users,
 } from 'lucide-react'
 
 interface CityPageProps {
@@ -60,13 +66,41 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
 
 import { createClient } from '@/lib/supabase/server'
 
-interface BuilderCount {
-  builder_id: string
-  builder_name: string
-  builder_slug: string
-  logo_url: string | null
-  community_count: number
+type MarketPageContent = {
+  id: string
+  city: string
+  state_code: string
+  city_overview: string | null
+  key_stats: string | null
+  neighborhood_breakdown: string | null
+  economy_job_market: string | null
+  schools_education: string | null
+  lifestyle_amenities: string | null
+  faqs: string | null
 }
+
+const marketInfoSections = [
+  {
+    key: 'neighborhood_breakdown',
+    title: 'Neighborhoods',
+    icon: Map,
+  },
+  {
+    key: 'economy_job_market',
+    title: 'Economy & Jobs',
+    icon: BriefcaseBusiness,
+  },
+  {
+    key: 'schools_education',
+    title: 'Schools & Education',
+    icon: GraduationCap,
+  },
+  {
+    key: 'lifestyle_amenities',
+    title: 'Lifestyle & Amenities',
+    icon: Sparkles,
+  },
+] as const
 
 function toSlug(value: string) {
   return value
@@ -93,6 +127,62 @@ function safeArray(arr: any): any[] {
   return Array.isArray(arr) ? arr : [arr]
 }
 
+function parseKeyStats(value: string | null | undefined) {
+  if (!value) return []
+
+  const tokens = value
+    .split('|')
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^:?-{3,}:?$/.test(token))
+
+  if (tokens[0]?.toLowerCase() === 'metric' && tokens[1]?.toLowerCase() === 'value') {
+    tokens.splice(0, 2)
+  }
+
+  const stats: { metric: string; value: string }[] = []
+  for (let index = 0; index < tokens.length; index += 2) {
+    const metric = tokens[index]
+    const statValue = tokens[index + 1]
+    if (metric && statValue) {
+      stats.push({ metric, value: statValue })
+    }
+  }
+
+  return stats
+}
+
+function parseFaqs(value: string | null | undefined) {
+  if (!value) return []
+
+  return value
+    .split(/\bQ:\s*/i)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [question, ...answerParts] = entry.split(/\bA:\s*/i)
+      return {
+        question: question?.trim().replace(/\s+/g, ' ') || '',
+        answer: answerParts.join('A: ').trim(),
+      }
+    })
+    .filter((faq) => faq.question && faq.answer)
+}
+
+function textParagraphs(value: string | null | undefined) {
+  if (!value) return []
+  return value
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+}
+
+function truncateText(value: string | null | undefined, maxLength = 210) {
+  const normalized = (value || '').replace(/\s+/g, ' ').trim()
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, maxLength).replace(/\s+\S*$/, '')}...`
+}
+
 export default async function CityPage({ params }: CityPageProps) {
   const { state, city } = await params
   const stateSlug = state.toLowerCase()
@@ -116,10 +206,19 @@ export default async function CityPage({ params }: CityPageProps) {
 
   const communities: any[] = communitiesData || []
 
+  const { data: marketPageData } = await supabase
+    .from('market_pages')
+    .select('id,city,state_code,city_overview,key_stats,neighborhood_breakdown,economy_job_market,schools_education,lifestyle_amenities,faqs')
+    .eq('state_code', stateInfo.code)
+    .ilike('city', cityName)
+    .maybeSingle()
+
+  const marketPage = marketPageData as unknown as MarketPageContent | null
+
   // Fetch all builders exactly like the builder directory to find valid city matchers
   const { data: buildersData } = await supabase
     .from('builders')
-    .select('*, communities(*), builder_markets(*)')
+    .select('id,name,slug,description,logo_url,rating,review_count,is_verified,is_premium,headquarters,year_founded,communities(name,slug,city,state,state_code,images),builder_markets(city,state_code,local_description,is_featured,sort_order)')
 
   const allBuilders: any[] = buildersData || []
 
@@ -163,7 +262,8 @@ export default async function CityPage({ params }: CityPageProps) {
       ...b,
       cityCommunityCount,
       is_featured: cityMarket?.is_featured || false,
-      sort_order: cityMarket?.sort_order ?? 9999
+      sort_order: cityMarket?.sort_order ?? 9999,
+      local_description: cityMarket?.local_description || null,
     }
   })
 
@@ -174,11 +274,15 @@ export default async function CityPage({ params }: CityPageProps) {
     return b.cityCommunityCount - a.cityCommunityCount
   })
   
-  const databaseBuilders = cityBuilders.slice(0, 6).map(b => ({
+  if (communities.length === 0 && cityBuilders.length === 0 && !marketPage) {
+    notFound()
+  }
+
+  const topBuilders = cityBuilders.slice(0, 6).map(b => ({
     id: b.id,
     name: b.name,
     slug: b.slug,
-    description: b.description || 'Dedicated home builder crafting quality communities.',
+    description: truncateText(b.local_description || b.description || 'Dedicated home builder crafting quality communities.'),
     logo: b.logo_url,
     rating: b.rating || 0,
     reviewCount: b.review_count || 0,
@@ -213,7 +317,21 @@ export default async function CityPage({ params }: CityPageProps) {
       }))
   }))
 
+  const remainingBuilders = cityBuilders.slice(6).map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    description: truncateText(b.local_description || b.description || 'Dedicated home builder crafting quality communities.', 150),
+    logo: b.logo_url,
+    isVerified: b.is_verified || false,
+    isPremium: b.is_premium || false,
+    communitiesCount: b.cityCommunityCount,
+  }))
+
   const totalHomes = communities.reduce((sum, c) => sum + (c.total_homes || c.home_count || 0), 0)
+  const keyStats = parseKeyStats(marketPage?.key_stats)
+  const faqs = parseFaqs(marketPage?.faqs)
+  const cityOverviewParagraphs = textParagraphs(marketPage?.city_overview)
 
   // Extract other active cities in this state
   const otherCities = new Set<string>()
@@ -266,7 +384,7 @@ export default async function CityPage({ params }: CityPageProps) {
 
       <div className="min-h-screen bg-slate-50">
         {/* Hero Section */}
-        <section className="bg-slate-900 text-white py-12 md:py-16">
+        <section className="bg-slate-900 text-white py-10 md:py-14">
           <div className="container mx-auto px-4">
             {/* Breadcrumb */}
             <nav className="text-sm text-slate-400 mb-4">
@@ -279,34 +397,78 @@ export default async function CityPage({ params }: CityPageProps) {
               <span className="text-white">{cityName}</span>
             </nav>
 
-            <div className="max-w-3xl">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <div className="max-w-4xl">
+              <h1 className="max-w-3xl text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
                 New Homes in {cityName}, {stateInfo.code}
               </h1>
-              <p className="text-lg text-slate-300 mb-6">
-                Explore {communities.length} new construction homes and
-                communities in {cityName}. Compare builders, prices, and amenities
-                to find your perfect home.
-              </p>
+              {!marketPage?.city_overview && (
+                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+                  Explore builders{communities.length > 0 ? `, ${communities.length} communities,` : ''} and
+                  new construction opportunities in {cityName}. Compare local options
+                  to find your perfect home.
+                </p>
+              )}
 
               {/* Quick Stats */}
-              <div className="flex flex-wrap gap-6">
+              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-200">
                 <div className="flex items-center gap-2">
-                  <Home className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm"><strong>{totalHomes > 0 ? totalHomes + '+' : 'New'}</strong> Homes</span>
+                  <Home className="h-4 w-4 text-emerald-400" />
+                  <span><strong className="text-white">{totalHomes > 0 ? totalHomes + '+' : 'New'}</strong> Homes</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm"><strong>{communities.length}</strong> Communities</span>
+                  <Building2 className="h-4 w-4 text-emerald-400" />
+                  <span><strong className="text-white">{cityBuilders.length}</strong> Builders</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <School className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm"><strong>4</strong> School Districts</span>
+                  <School className="h-4 w-4 text-emerald-400" />
+                  <span><strong className="text-white">{communities.length}</strong> Communities</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+        {cityOverviewParagraphs.length > 0 && (
+          <section className="border-b border-slate-200 bg-white py-7">
+            <div className="container mx-auto px-4">
+              <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-700">City overview</p>
+                  <h2 className="mt-1 text-xl font-bold text-slate-950">
+                    About {cityName}
+                  </h2>
+                </div>
+                <div className="max-w-4xl space-y-3 text-sm leading-7 text-slate-700 md:text-base">
+                  {cityOverviewParagraphs.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {keyStats.length > 0 && (
+          <section className="border-b border-slate-200 bg-slate-50 py-6">
+            <div className="container mx-auto px-4">
+              <div className="mb-4 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-emerald-600" />
+                <h2 className="text-lg font-bold text-slate-900">{cityName} Market Snapshot</h2>
+              </div>
+              <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+                {keyStats.slice(0, 12).map((stat) => (
+                  <div key={stat.metric} className="flex min-w-0 gap-3 border-t border-slate-200 pt-3">
+                    <BarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">{stat.metric}</p>
+                      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-6 text-slate-950">{stat.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Builders Section */}
         <section className="py-12">
@@ -326,13 +488,60 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
 
             <div className="flex flex-col gap-6">
-              {databaseBuilders.map((builder) => (
+              {topBuilders.map((builder) => (
                 <BuilderCard key={builder.slug} builder={builder} isAdmin={false} />
               ))}
-              {databaseBuilders.length === 0 && (
+              {topBuilders.length === 0 && (
                 <p className="text-slate-500 text-center py-4">No builders found here yet.</p>
               )}
             </div>
+
+            {remainingBuilders.length > 0 && (
+              <div className="mt-12">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      More Builders in {cityName}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Additional builders active in this market
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="bg-white">
+                    {remainingBuilders.length} more
+                  </Badge>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {remainingBuilders.map((builder) => (
+                    <Link
+                      key={builder.id}
+                      href={`/builders/${builder.slug}`}
+                      className="group flex min-h-32 gap-4 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-emerald-300 hover:shadow-md"
+                    >
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2">
+                        {builder.logo ? (
+                          <img src={builder.logo} alt={`${builder.name} logo`} loading="lazy" decoding="async" className="h-full w-full object-contain" />
+                        ) : (
+                          <Building2 className="h-7 w-7 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="truncate font-semibold text-slate-950 group-hover:text-emerald-700">{builder.name}</h4>
+                          {builder.isVerified && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Verified</Badge>}
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">{builder.description}</p>
+                        <p className="mt-3 flex items-center gap-1 text-xs font-medium text-slate-500">
+                          <Users className="h-3.5 w-3.5" />
+                          {builder.communitiesCount} communities
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -421,6 +630,70 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
         </section>
+
+        {(marketInfoSections.some((section) => marketPage?.[section.key]) || faqs.length > 0) && (
+          <section className="bg-slate-50 py-12">
+            <div className="container mx-auto px-4">
+              <div className="mb-8 flex items-end justify-between gap-6">
+                <div>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+                    Local Market Guide
+                  </p>
+                  <h2 className="text-2xl font-bold text-slate-900 md:text-3xl">
+                    Living in {cityName}, {stateInfo.code}
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                {marketInfoSections.map((section) => {
+                  const content = marketPage?.[section.key]
+                  if (!content) return null
+                  const Icon = section.icon
+
+                  return (
+                    <article key={section.key} className="rounded-lg border border-slate-200 bg-white p-6">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-950">{section.title}</h3>
+                      </div>
+                      <div className="space-y-4 text-sm leading-7 text-slate-700">
+                        {textParagraphs(content).map((paragraph) => (
+                          <p key={paragraph}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+
+              {faqs.length > 0 && (
+                <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                      <HelpCircle className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-950">FAQs About New Homes in {cityName}</h3>
+                  </div>
+
+                  <div className="divide-y divide-slate-200">
+                    {faqs.map((faq) => (
+                      <details key={faq.question} className="group py-4">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-950">
+                          <span>{faq.question}</span>
+                          <span className="text-emerald-700 transition-transform group-open:rotate-45">+</span>
+                        </summary>
+                        <p className="mt-3 text-sm leading-7 text-slate-700">{faq.answer}</p>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Nearby Cities */}
         {nearbyCities.length > 0 && (

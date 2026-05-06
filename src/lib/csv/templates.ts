@@ -201,6 +201,8 @@ export const builderMarketTemplate: CSVTemplate = {
     'state_code',
     'local_description',
     'image_url',
+    'is_featured',
+    'sort_order',
   ],
   sampleData: {
     builder_slug: 'lennar',
@@ -208,6 +210,8 @@ export const builderMarketTemplate: CSVTemplate = {
     state_code: 'TX',
     local_description: 'Building quality homes in the heart of Austin with modern amenities.',
     image_url: 'https://example.com/austin-market-image.jpg',
+    is_featured: 'false',
+    sort_order: '0',
   },
   requiredColumns: ['builder_slug', 'city', 'state_code'],
   validationRules: [
@@ -215,13 +219,50 @@ export const builderMarketTemplate: CSVTemplate = {
     { column: 'city', required: true, type: 'string' },
     { column: 'state_code', required: true, type: 'string', pattern: '^[A-Z]{2}$' },
     { column: 'image_url', type: 'url' },
+    { column: 'is_featured', type: 'string', enum: ['true', 'false', 'TRUE', 'FALSE', '1', '0', 'yes', 'no', 'YES', 'NO'] },
+    { column: 'sort_order', type: 'number', min: 0 },
+  ],
+}
+
+/**
+ * Market Info Template
+ */
+export const marketInfoTemplate: CSVTemplate = {
+  name: 'Market Info',
+  description: 'Upload city-level market page content',
+  headers: [
+    'city',
+    'state_code',
+    'city_overview',
+    'key_stats',
+    'neighborhood_breakdown',
+    'economy_job_market',
+    'schools_education',
+    'lifestyle_amenities',
+    'faqs',
+  ],
+  sampleData: {
+    city: 'Apache Junction',
+    state_code: 'AZ',
+    city_overview: 'Apache Junction offers new construction options near the Superstition Mountains.',
+    key_stats: '| Metric | Value | | :--- | :--- | | Population | 44,309 | | Median Home Value | $211,500 |',
+    neighborhood_breakdown: 'Superstition Vistas offers master-planned living with desert views.',
+    economy_job_market: 'The local economy is supported by retail, education, healthcare, public services, and construction.',
+    schools_education: 'Apache Junction Unified School District serves local families, with nearby higher education options.',
+    lifestyle_amenities: 'Residents enjoy hiking, parks, local dining, and access to the broader Phoenix metro.',
+    faqs: 'Q: What builders are active in Apache Junction, AZ? A: Several national and regional builders are active in the market.',
+  },
+  requiredColumns: ['city', 'state_code'],
+  validationRules: [
+    { column: 'city', required: true, type: 'string' },
+    { column: 'state_code', required: true, type: 'string', pattern: '^[A-Z]{2}$' },
   ],
 }
 
 /**
  * Get template by type
  */
-export function getTemplate(type: 'builders' | 'communities' | 'homes' | 'builder_markets'): CSVTemplate {
+export function getTemplate(type: 'builders' | 'communities' | 'homes' | 'builder_markets' | 'market_info'): CSVTemplate {
   switch (type) {
     case 'builders':
       return builderTemplate
@@ -231,6 +272,8 @@ export function getTemplate(type: 'builders' | 'communities' | 'homes' | 'builde
       return homeTemplate
     case 'builder_markets':
       return builderMarketTemplate
+    case 'market_info':
+      return marketInfoTemplate
     default:
       throw new Error(`Unknown template type: ${type}`)
   }
@@ -245,5 +288,6 @@ export function getAllTemplates(): Record<string, CSVTemplate> {
     communities: communityTemplate,
     homes: homeTemplate,
     builder_markets: builderMarketTemplate,
+    market_info: marketInfoTemplate,
   }
 }

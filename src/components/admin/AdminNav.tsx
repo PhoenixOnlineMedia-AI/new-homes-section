@@ -29,6 +29,7 @@ const navItems = [
       { title: 'Communities CSV', href: '/admin/upload/communities' },
       { title: 'Homes CSV', href: '/admin/upload/homes' },
       { title: 'Builder Markets CSV', href: '/admin/upload/builder-markets' },
+      { title: 'Market Info CSV', href: '/admin/upload/market-info' },
     ],
   },
   {
