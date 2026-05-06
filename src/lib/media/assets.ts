@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/database.types'
 
-export type MediaEntityType = 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
+export type MediaEntityType = 'builder' | 'builder_market' | 'market_page' | 'community' | 'home' | 'unassigned'
 export type MediaAssetRole = 'logo' | 'hero' | 'gallery' | 'floor_plan' | 'market'
 export type MediaAssetStatus = 'pending' | 'matched' | 'approved' | 'rejected'
 
@@ -16,6 +16,7 @@ const IMAGE_CONTENT_TYPES = new Set([
 ])
 
 export function bucketForMedia(entityType: MediaEntityType, role: MediaAssetRole) {
+  if (entityType === 'unassigned') return 'media-library'
   if (entityType === 'builder' && role === 'logo') return 'builder-logos'
   if (entityType === 'builder_market') return 'builder-market-media'
   if (entityType === 'market_page') return 'market-page-media'
@@ -83,7 +84,7 @@ function fileNameFromUrl(sourceUrl: string) {
 
 function buildStoragePath(options: {
   entityType: MediaEntityType
-  entityId: string
+  entityId: string | null
   role: MediaAssetRole
   preferredName: string
   extension: string
@@ -94,7 +95,7 @@ function buildStoragePath(options: {
   const name = sanitizePathPart(options.preferredName.replace(/\.[a-z0-9]+$/i, ''))
   const index = String(options.sortOrder ?? 0).padStart(2, '0')
 
-  return `${prefix}/${options.entityId}/${role}/${index}-${name}.${options.extension}`
+  return `${prefix}/${options.entityId || 'library'}/${role}/${index}-${name}.${options.extension}`
 }
 
 function getPublicUrl(supabase: AdminClient, bucket: string, path: string) {
@@ -119,9 +120,10 @@ async function recordMediaAsset(
 
 export async function uploadMediaFile(options: {
   entityType: MediaEntityType
-  entityId: string
+  entityId?: string | null
   role: MediaAssetRole
   file: File
+  preferredName?: string | null
   title?: string | null
   altText?: string | null
   sortOrder?: number
@@ -138,9 +140,9 @@ export async function uploadMediaFile(options: {
   const extension = extensionFromContentType(contentType) || extensionFromName(options.file.name) || 'jpg'
   const path = buildStoragePath({
     entityType: options.entityType,
-    entityId: options.entityId,
+    entityId: options.entityId || null,
     role: options.role,
-    preferredName: options.file.name,
+    preferredName: options.preferredName || options.file.name,
     extension,
     sortOrder: options.sortOrder,
   })
@@ -158,7 +160,7 @@ export async function uploadMediaFile(options: {
 
   await recordMediaAsset(supabase, {
     entity_type: options.entityType,
-    entity_id: options.entityId,
+    entity_id: options.entityId || null,
     bucket,
     path,
     public_url: publicUrl,
@@ -172,13 +174,15 @@ export async function uploadMediaFile(options: {
     size_bytes: options.file.size,
   })
 
-  await syncEntityMediaUrl(supabase, {
-    entityType: options.entityType,
-    entityId: options.entityId,
-    role: options.role,
-    publicUrl,
-    sortOrder: options.sortOrder ?? 0,
-  })
+  if (options.entityType !== 'unassigned' && options.entityId) {
+    await syncEntityMediaUrl(supabase, {
+      entityType: options.entityType,
+      entityId: options.entityId,
+      role: options.role,
+      publicUrl,
+      sortOrder: options.sortOrder ?? 0,
+    })
+  }
 
   return publicUrl
 }
@@ -186,7 +190,7 @@ export async function uploadMediaFile(options: {
 export async function importRemoteMedia(options: {
   supabase?: AdminClient
   entityType: MediaEntityType
-  entityId: string
+  entityId?: string | null
   role: MediaAssetRole
   sourceUrl: string
   preferredName?: string
@@ -223,7 +227,7 @@ export async function importRemoteMedia(options: {
   const bucket = bucketForMedia(options.entityType, options.role)
   const path = buildStoragePath({
     entityType: options.entityType,
-    entityId: options.entityId,
+    entityId: options.entityId || null,
     role: options.role,
     preferredName: options.preferredName || sourceName || options.role,
     extension,
@@ -243,7 +247,7 @@ export async function importRemoteMedia(options: {
 
   await recordMediaAsset(supabase, {
     entity_type: options.entityType,
-    entity_id: options.entityId,
+    entity_id: options.entityId || null,
     bucket,
     path,
     public_url: publicUrl,
@@ -258,13 +262,15 @@ export async function importRemoteMedia(options: {
     size_bytes: buffer.byteLength || contentLength || null,
   })
 
-  await syncEntityMediaUrl(supabase, {
-    entityType: options.entityType,
-    entityId: options.entityId,
-    role: options.role,
-    publicUrl,
-    sortOrder: options.sortOrder ?? 0,
-  })
+  if (options.entityType !== 'unassigned' && options.entityId) {
+    await syncEntityMediaUrl(supabase, {
+      entityType: options.entityType,
+      entityId: options.entityId,
+      role: options.role,
+      publicUrl,
+      sortOrder: options.sortOrder ?? 0,
+    })
+  }
 
   return publicUrl
 }

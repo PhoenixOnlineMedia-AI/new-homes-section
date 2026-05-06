@@ -402,8 +402,8 @@ export type MarketPageUpdate = {
 
 export type MediaAssetRow = {
   id: string
-  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
-  entity_id: string
+  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home' | 'unassigned'
+  entity_id: string | null
   bucket: string
   path: string
   public_url: string
@@ -423,8 +423,8 @@ export type MediaAssetRow = {
 
 export type MediaAssetInsert = {
   id?: string
-  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
-  entity_id: string
+  entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home' | 'unassigned'
+  entity_id?: string | null
   bucket: string
   path: string
   public_url: string
@@ -444,8 +444,8 @@ export type MediaAssetInsert = {
 
 export type MediaAssetUpdate = {
   id?: string
-  entity_type?: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home'
-  entity_id?: string
+  entity_type?: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home' | 'unassigned'
+  entity_id?: string | null
   bucket?: string
   path?: string
   public_url?: string

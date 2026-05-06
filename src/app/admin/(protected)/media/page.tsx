@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MediaBulkUpload } from '@/components/admin/MediaBulkUpload'
 import type { MediaAsset } from '@/lib/supabase/database.types'
 
 type EntityOption = {
@@ -49,6 +50,7 @@ function defaultRole(entityType: MediaEntityType, role: string) {
 }
 
 function assetLabel(asset: MediaAsset, labels: Map<string, string>) {
+  if (asset.entity_type === 'unassigned' || !asset.entity_id) return 'Unassigned media library'
   return labels.get(`${asset.entity_type}:${asset.entity_id}`) || `${asset.entity_type} ${asset.entity_id.slice(0, 8)}`
 }
 
@@ -212,6 +214,9 @@ export default async function AdminMediaPage() {
               <div className="space-y-2">
                 <Label htmlFor="file">Image File</Label>
                 <Input id="file" name="file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" required />
+                <p className="text-xs text-gray-500">
+                  For a whole folder or many files at once, use Bulk Upload below.
+                </p>
               </div>
               <MetadataFields />
               <Button type="submit" className="w-full">
@@ -221,6 +226,8 @@ export default async function AdminMediaPage() {
           </CardContent>
         </Card>
       </div>
+
+      <MediaBulkUpload entityOptions={entityOptions} />
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
