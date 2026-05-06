@@ -1,7 +1,27 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { importRemoteMedia } from '@/lib/media/assets'
 import { revalidatePath } from 'next/cache'
+
+type BuilderLookup = { id: string; slug: string }
+type BuilderMarketLookup = {
+    id: string
+    builder_id: string
+    city: string | null
+    state_code: string
+}
+type PreparedMarketRow = {
+    source: Record<string, string>
+    builderId: string
+    city: string | null
+    stateCode: string
+    localDescription: string | null
+}
+
+function normalizeKey(builderId: string, city: string | null, stateCode: string) {
+    return `${builderId}|${(city || '').trim().toLowerCase()}|${stateCode.trim().toUpperCase()}`
+}
 
 export default function UploadBuilderMarketsPage() {
     const template = getTemplate('builder_markets')
@@ -13,65 +33,136 @@ export default function UploadBuilderMarketsPage() {
         const errors: string[] = []
         let successCount = 0
 
+        const builderSlugs = Array.from(new Set(data.map((row) => row.builder_slug?.trim()).filter(Boolean)))
+        const { data: buildersData, error: buildersError } = await supabase
+            .from('builders')
+            .select('id,slug')
+            .in('slug', builderSlugs)
+
+        if (buildersError) {
+            return {
+                success: false,
+                message: buildersError.message,
+                errors: [buildersError.message],
+            }
+        }
+
+        const builders = (buildersData || []) as unknown as BuilderLookup[]
+        const builderIdBySlug = new Map(builders.map((builder) => [builder.slug, builder.id]))
+        const preparedRows: PreparedMarketRow[] = []
+
         for (const row of data) {
-            // Find builder ID by slug
-            const { data: builderData, error: builderError } = await supabase
-                .from('builders')
-                .select('id')
-                .eq('slug', row.builder_slug)
-                .single()
+            const builderSlug = row.builder_slug?.trim()
+            const builderId = builderIdBySlug.get(builderSlug)
 
-            const builder: any = builderData
-
-            if (builderError || !builder) {
+            if (!builderId) {
                 errors.push(`Row for "${row.city}, ${row.state_code}": Builder with slug '${row.builder_slug}' not found.`)
                 continue
             }
 
-            // Check if builder market override already exists
-            const { data: existingData } = await supabase
+            preparedRows.push({
+                source: row,
+                builderId,
+                city: row.city?.trim() || null,
+                stateCode: row.state_code?.trim().toUpperCase(),
+                localDescription: row.local_description?.trim() || null,
+            })
+        }
+
+        const builderIds = Array.from(new Set(preparedRows.map((row) => row.builderId)))
+        const { data: existingMarketsData, error: existingMarketsError } = builderIds.length > 0
+            ? await supabase
                 .from('builder_markets')
-                .select('id')
-                .eq('builder_id', builder.id)
-                .ilike('city', row.city)
-                .ilike('state_code', row.state_code)
-                .maybeSingle()
+                .select('id,builder_id,city,state_code')
+                .in('builder_id', builderIds)
+            : { data: [], error: null }
 
-            const existing: any = existingData
+        if (existingMarketsError) {
+            return {
+                success: false,
+                message: existingMarketsError.message,
+                errors: [existingMarketsError.message],
+            }
+        }
 
-            const marketData = {
-                builder_id: builder.id,
-                city: row.city,
-                state_code: row.state_code,
-                local_description: row.local_description || null,
-                image_url: row.image_url || null,
+        const existingMarkets = (existingMarketsData || []) as unknown as BuilderMarketLookup[]
+        const existingByKey = new Map(existingMarkets.map((market) => [
+            normalizeKey(market.builder_id, market.city, market.state_code),
+            market,
+        ]))
+        const importedMarketIds = new Map<string, string>()
+        const inserts: PreparedMarketRow[] = []
+
+        for (const row of preparedRows) {
+            const key = normalizeKey(row.builderId, row.city, row.stateCode)
+            const existing = existingByKey.get(key)
+
+            if (!existing) {
+                inserts.push(row)
+                continue
             }
 
-            if (existing) {
-                // Update existing
-                const { error } = await supabase
-                    .from('builder_markets')
-                    // @ts-expect-error Supabase inference
-                    .update(marketData)
-                    // @ts-ignore
-                    .eq('id', existing.id)
+            const { error } = await supabase
+                .from('builder_markets')
+                .update({
+                    builder_id: row.builderId,
+                    city: row.city,
+                    state_code: row.stateCode,
+                    local_description: row.localDescription,
+                } as never)
+                .eq('id', existing.id)
 
-                if (error) {
-                    errors.push(`Row for "${row.city}, ${row.state_code}": ${error.message}`)
-                } else {
-                    successCount++
+            if (error) {
+                errors.push(`Row for "${row.city || 'State-wide'}, ${row.stateCode}": ${error.message}`)
+            } else {
+                successCount++
+                importedMarketIds.set(key, existing.id)
+            }
+        }
+
+        if (inserts.length > 0) {
+            const { data: insertedMarkets, error: insertError } = await supabase
+                .from('builder_markets')
+                .insert(inserts.map((row) => ({
+                    builder_id: row.builderId,
+                    city: row.city,
+                    state_code: row.stateCode,
+                    local_description: row.localDescription,
+                })) as never)
+                .select('id,builder_id,city,state_code')
+
+            if (insertError) {
+                for (const row of inserts) {
+                    errors.push(`Row for "${row.city || 'State-wide'}, ${row.stateCode}": ${insertError.message}`)
                 }
             } else {
-                // Insert new
-                const { error } = await supabase
-                    .from('builder_markets')
-                    // @ts-expect-error Supabase inference
-                    .insert(marketData)
+                const inserted = (insertedMarkets || []) as unknown as BuilderMarketLookup[]
 
-                if (error) {
-                    errors.push(`Row for "${row.city}, ${row.state_code}": ${error.message}`)
-                } else {
-                    successCount++
+                for (const market of inserted) {
+                    importedMarketIds.set(normalizeKey(market.builder_id, market.city, market.state_code), market.id)
+                }
+
+                successCount += inserted.length
+            }
+        }
+
+        for (const row of preparedRows) {
+            const marketId = importedMarketIds.get(normalizeKey(row.builderId, row.city, row.stateCode))
+
+            if (marketId && row.source.image_url) {
+                try {
+                    await importRemoteMedia({
+                        supabase,
+                        entityType: 'builder_market',
+                        entityId: marketId,
+                        role: 'market',
+                        sourceUrl: row.source.image_url,
+                        preferredName: `${row.source.builder_slug}-${row.city || row.stateCode}-market`,
+                        title: `${row.city || 'State-wide'}, ${row.stateCode}`,
+                        altText: `${row.source.builder_slug} market image for ${row.city || row.stateCode}`,
+                    })
+                } catch (error) {
+                    errors.push(`Image for "${row.city || 'State-wide'}, ${row.stateCode}": ${error instanceof Error ? error.message : 'Import failed'}`)
                 }
             }
         }
@@ -97,7 +188,7 @@ export default function UploadBuilderMarketsPage() {
                 </p>
             </div>
 
-            <CSVUpload template={template} onUpload={uploadBuilderMarkets} />
+            <CSVUpload template={template} onUpload={uploadBuilderMarkets} batchSize={75} />
         </div>
     )
 }

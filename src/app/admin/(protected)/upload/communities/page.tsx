@@ -1,7 +1,10 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { importRemoteMedia, splitMediaUrlList } from '@/lib/media/assets'
 import { revalidatePath } from 'next/cache'
+
+type IdOnly = { id: string }
 
 export default function UploadCommunitiesPage() {
   const template = getTemplate('communities')
@@ -25,6 +28,7 @@ export default function UploadCommunitiesPage() {
         errors.push(`Row for "${row.name}": Builder "${row.builder_slug}" not found`)
         continue
       }
+      const builderRecord = builder as unknown as IdOnly
 
       // Check if community already exists by slug
       const { data: existing } = await supabase
@@ -34,8 +38,7 @@ export default function UploadCommunitiesPage() {
         .single()
 
       const communityData = {
-        // @ts-ignore
-        builder_id: builder.id,
+        builder_id: builderRecord.id,
         name: row.name,
         slug: row.slug,
         description: row.description || null,
@@ -56,33 +59,62 @@ export default function UploadCommunitiesPage() {
         status: row.status || 'selling',
         amenities: row.amenities ? row.amenities.split(',').map((s: string) => s.trim()) : [],
         school_district: row.school_district || null,
-        images: row.images ? row.images.split(',').map((s: string) => s.trim()) : [],
+        images: [],
         source_site: 'csv_upload',
       }
 
-      if (existing) {
+      const existingCommunity = existing as unknown as IdOnly | null
+      let communityId = existingCommunity?.id
+
+      if (existingCommunity) {
         const { error } = await supabase
           .from('communities')
           // @ts-expect-error Supabase type inference issue with server actions
           .update(communityData)
-          // @ts-ignore
-          .eq('id', existing.id)
+          .eq('id', existingCommunity.id)
 
         if (error) {
           errors.push(`Row for "${row.name}": ${error.message}`)
+          continue
         } else {
           successCount++
         }
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('communities')
           // @ts-expect-error Supabase type inference issue with server actions
           .insert(communityData)
+          .select('id')
+          .single()
 
         if (error) {
           errors.push(`Row for "${row.name}": ${error.message}`)
+          continue
         } else {
+          communityId = (inserted as unknown as IdOnly | null)?.id
           successCount++
+        }
+      }
+
+      if (communityId && row.images) {
+        const imageUrls = splitMediaUrlList(row.images)
+
+        for (const [index, imageUrl] of imageUrls.entries()) {
+          try {
+            await importRemoteMedia({
+              supabase,
+              entityType: 'community',
+              entityId: communityId,
+              role: index === 0 ? 'hero' : 'gallery',
+              sourceUrl: imageUrl,
+              preferredName: `${row.slug}-${index + 1}`,
+              title: row.name,
+              altText: `${row.name} community photo`,
+              sortOrder: index,
+            })
+          } catch (error) {
+            errors.push(`Image ${index + 1} for "${row.name}": ${error instanceof Error ? error.message : 'Import failed'}`)
+          }
         }
       }
     }

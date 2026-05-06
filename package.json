@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:builder-logos": "npx tsx scripts/import-builder-logos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

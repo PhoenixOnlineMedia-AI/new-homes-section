@@ -16,6 +16,7 @@ interface BuilderMarket {
     city: string | null
     state_code: string
     local_description: string | null
+    image_url: string | null
     is_featured: boolean | null
     sort_order: number | null
     created_at: string
@@ -40,6 +41,7 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
     const [city, setCity] = useState('')
     const [stateCode, setStateCode] = useState('')
     const [localDescription, setLocalDescription] = useState('')
+    const [imageUrl, setImageUrl] = useState('')
     const [isFeatured, setIsFeatured] = useState(false)
     const [sortOrder, setSortOrder] = useState<number>(0)
 
@@ -61,6 +63,7 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
                 city: city.trim() || null,
                 state_code: stateCode.trim().toUpperCase(),
                 local_description: localDescription.trim() || null,
+                image_url: imageUrl.trim() || null,
                 is_featured: isFeatured,
                 sort_order: sortOrder
             })
@@ -79,6 +82,7 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
             setCity('')
             setStateCode('')
             setLocalDescription('')
+            setImageUrl('')
             setIsFeatured(false)
             setSortOrder(0)
             router.refresh()
@@ -191,6 +195,18 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
                         <p className="text-xs text-slate-500">Leave blank if you only want to register the market without overriding the text.</p>
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor="market_image">Market Image URL (Optional)</Label>
+                        <Input
+                            id="market_image"
+                            type="url"
+                            placeholder="Use the Media Library for first-party hosted images"
+                            value={imageUrl}
+                            onChange={e => setImageUrl(e.target.value)}
+                        />
+                        <p className="text-xs text-slate-500">Images imported through CSV or the Media Library will be hosted in Supabase Storage.</p>
+                    </div>
+
                     <Button type="submit" disabled={isSaving}>
                         {isSaving ? 'Adding...' : 'Add Market Override'}
                     </Button>
@@ -209,6 +225,12 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
                             {markets.map(market => (
                                 <div key={market.id} className="p-4 flex gap-4 items-start bg-white hover:bg-slate-50 transition-colors">
                                     <div className="flex-1 space-y-1">
+                                        {market.image_url && (
+                                            <div className="mb-3 h-24 w-40 overflow-hidden rounded-md border bg-slate-100">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={market.image_url} alt={`${market.city || market.state_code} market`} className="h-full w-full object-cover" />
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold">{market.city || 'State-Wide'}, {market.state_code}</span>
                                             {market.is_featured && (

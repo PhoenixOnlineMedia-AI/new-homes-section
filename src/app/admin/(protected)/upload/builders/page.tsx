@@ -1,7 +1,10 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { importRemoteMedia } from '@/lib/media/assets'
 import { revalidatePath } from 'next/cache'
+
+type IdOnly = { id: string }
 
 export default function UploadBuildersPage() {
   const template = getTemplate('builders')
@@ -31,35 +34,58 @@ export default function UploadBuildersPage() {
         headquarters: row.headquarters || null,
         year_founded: row.year_founded ? parseInt(row.year_founded) : null,
         rating: row.rating ? parseFloat(row.rating) : null,
-        logo_url: row.logo_url || null,
         source_site: 'csv_upload',
       }
 
-      if (existing) {
+      const existingBuilder = existing as unknown as IdOnly | null
+      let builderId = existingBuilder?.id
+
+      if (existingBuilder) {
         // Update existing
         const { error } = await supabase
           .from('builders')
           // @ts-expect-error Supabase type inference issue with server actions
           .update(builderData)
-          // @ts-ignore
-          .eq('id', existing.id)
+          .eq('id', existingBuilder.id)
 
         if (error) {
           errors.push(`Row for "${row.name}": ${error.message}`)
+          continue
         } else {
           successCount++
         }
       } else {
         // Insert new
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('builders')
           // @ts-expect-error Supabase type inference issue with server actions
           .insert(builderData)
+          .select('id')
+          .single()
 
         if (error) {
           errors.push(`Row for "${row.name}": ${error.message}`)
+          continue
         } else {
+          builderId = (inserted as unknown as IdOnly | null)?.id
           successCount++
+        }
+      }
+
+      if (builderId && row.logo_url) {
+        try {
+          await importRemoteMedia({
+            supabase,
+            entityType: 'builder',
+            entityId: builderId,
+            role: 'logo',
+            sourceUrl: row.logo_url,
+            preferredName: `${row.slug}-logo`,
+            title: `${row.name} logo`,
+            altText: `${row.name} logo`,
+          })
+        } catch (error) {
+          errors.push(`Logo for "${row.name}": ${error instanceof Error ? error.message : 'Import failed'}`)
         }
       }
     }

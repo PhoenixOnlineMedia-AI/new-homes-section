@@ -105,7 +105,7 @@ export const communityTemplate: CSVTemplate = {
     status: 'selling',
     amenities: 'pool,clubhouse,trails,playground',
     school_district: 'Austin ISD',
-    images: 'https://example.com/img1.jpg,https://example.com/img2.jpg',
+    images: 'https://example.com/img1.jpg|https://example.com/img2.jpg',
   },
   requiredColumns: ['builder_slug', 'name', 'slug', 'city', 'state', 'state_code'],
   validationRules: [
@@ -169,7 +169,7 @@ export const homeTemplate: CSVTemplate = {
     description: 'Spacious two-story home with open concept living',
     features: 'granite countertops,hardwood floors,stainless appliances',
     status: 'available',
-    images: 'https://example.com/floorplan1.jpg,https://example.com/exterior1.jpg',
+    images: 'https://example.com/floorplan1.jpg|https://example.com/exterior1.jpg',
     floor_plan_url: 'https://example.com/floorplan.pdf',
     virtual_tour_url: 'https://example.com/tour',
   },
@@ -214,6 +214,7 @@ export const builderMarketTemplate: CSVTemplate = {
     { column: 'builder_slug', required: true, type: 'string', pattern: '^[a-z0-9-]+$' },
     { column: 'city', required: true, type: 'string' },
     { column: 'state_code', required: true, type: 'string', pattern: '^[A-Z]{2}$' },
+    { column: 'image_url', type: 'url' },
   ],
 }
 

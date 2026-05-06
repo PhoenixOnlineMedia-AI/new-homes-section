@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Builder, Database } from '@/lib/supabase/database.types'
 import { BuilderMarketsEditor } from '@/components/admin/BuilderMarketsEditor'
+import Link from 'next/link'
 
 type BuilderUpdate = Database['public']['Tables']['builders']['Update']
 
@@ -20,7 +21,7 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
         .select('*')
         .eq('id', id)
         .single()
-    const builder: any = data
+    const builder = data as Builder | null
 
     if (error || !builder) {
         return <div>Builder not found</div>
@@ -54,8 +55,7 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
         const supabaseAdmin = createAdminClient()
         const { error: updateError } = await supabaseAdmin
             .from('builders')
-            // @ts-expect-error - Type inference failing on generated Supabase types
-            .update(updateData as any)
+            .update(updateData as never)
             .eq('id', id)
 
         if (updateError) {
@@ -142,6 +142,9 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
                         <div className="space-y-2">
                             <Label htmlFor="logo_url">Logo URL</Label>
                             <Input id="logo_url" name="logo_url" defaultValue={builder.logo_url || ''} />
+                            <p className="text-xs text-slate-500">
+                                For permanent hosting, use the <Link href="/admin/media" className="font-medium text-blue-700 hover:underline">Media Library</Link> to upload or import a logo.
+                            </p>
                         </div>
 
                         <div className="flex gap-4 pt-4">
@@ -149,7 +152,7 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
                                 Save Changes
                             </Button>
                             <Button type="button" variant="outline" asChild>
-                                <a href="/builders">Cancel</a>
+                                <Link href="/builders">Cancel</Link>
                             </Button>
                         </div>
                     </form>

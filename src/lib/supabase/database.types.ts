@@ -313,6 +313,7 @@ export type BuilderMarketRow = {
   city: string | null
   state_code: string
   local_description: string | null
+  image_url: string | null
   is_featured: boolean | null
   sort_order: number | null
   created_at: string
@@ -325,6 +326,7 @@ export type BuilderMarketInsert = {
   city?: string | null
   state_code: string
   local_description?: string | null
+  image_url?: string | null
   is_featured?: boolean | null
   sort_order?: number | null
   created_at?: string
@@ -337,8 +339,72 @@ export type BuilderMarketUpdate = {
   city?: string | null
   state_code?: string
   local_description?: string | null
+  image_url?: string | null
   is_featured?: boolean | null
   sort_order?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type MediaAssetRow = {
+  id: string
+  entity_type: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_id: string
+  bucket: string
+  path: string
+  public_url: string
+  source_url: string | null
+  original_filename: string | null
+  title: string | null
+  alt_text: string | null
+  role: 'logo' | 'hero' | 'gallery' | 'floor_plan' | 'market'
+  sort_order: number
+  status: 'pending' | 'matched' | 'approved' | 'rejected'
+  content_type: string | null
+  size_bytes: number | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MediaAssetInsert = {
+  id?: string
+  entity_type: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_id: string
+  bucket: string
+  path: string
+  public_url: string
+  source_url?: string | null
+  original_filename?: string | null
+  title?: string | null
+  alt_text?: string | null
+  role?: 'logo' | 'hero' | 'gallery' | 'floor_plan' | 'market'
+  sort_order?: number
+  status?: 'pending' | 'matched' | 'approved' | 'rejected'
+  content_type?: string | null
+  size_bytes?: number | null
+  created_by?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type MediaAssetUpdate = {
+  id?: string
+  entity_type?: 'builder' | 'builder_market' | 'community' | 'home'
+  entity_id?: string
+  bucket?: string
+  path?: string
+  public_url?: string
+  source_url?: string | null
+  original_filename?: string | null
+  title?: string | null
+  alt_text?: string | null
+  role?: 'logo' | 'hero' | 'gallery' | 'floor_plan' | 'market'
+  sort_order?: number
+  status?: 'pending' | 'matched' | 'approved' | 'rejected'
+  content_type?: string | null
+  size_bytes?: number | null
+  created_by?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -366,6 +432,11 @@ export interface Database {
         Row: BuilderMarketRow
         Insert: BuilderMarketInsert
         Update: BuilderMarketUpdate
+      }
+      media_assets: {
+        Row: MediaAssetRow
+        Insert: MediaAssetInsert
+        Update: MediaAssetUpdate
       }
     }
     Views: {
@@ -396,3 +467,4 @@ export interface Database {
 export type Builder = BuilderRow
 export type Community = CommunityRow
 export type Home = HomeRow
+export type MediaAsset = MediaAssetRow

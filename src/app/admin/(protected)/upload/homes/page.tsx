@@ -1,7 +1,10 @@
 import { getTemplate } from '@/lib/csv/templates'
 import { CSVUpload } from '@/components/admin/CSVUpload'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { importRemoteMedia, splitMediaUrlList } from '@/lib/media/assets'
 import { revalidatePath } from 'next/cache'
+
+type IdOnly = { id: string }
 
 export default function UploadHomesPage() {
   const template = getTemplate('homes')
@@ -25,10 +28,10 @@ export default function UploadHomesPage() {
         errors.push(`Row for "${row.name}": Community "${row.community_slug}" not found`)
         continue
       }
+      const communityRecord = community as unknown as IdOnly
 
       const homeData = {
-        // @ts-ignore
-        community_id: community.id,
+        community_id: communityRecord.id,
         name: row.name || null,
         address: row.address || '',
         base_price: row.base_price ? parseInt(row.base_price) : null,
@@ -43,20 +46,46 @@ export default function UploadHomesPage() {
         description: row.description || null,
         features: row.features ? row.features.split(',').map((s: string) => s.trim()) : [],
         status: row.status || 'available',
-        images: row.images ? row.images.split(',').map((s: string) => s.trim()) : [],
+        images: [],
         floor_plan_url: row.floor_plan_url || null,
         virtual_tour_url: row.virtual_tour_url || null,
       }
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('homes')
         // @ts-expect-error Supabase type inference issue with server actions
         .insert(homeData)
+        .select('id')
+        .single()
 
       if (error) {
         errors.push(`Row for "${row.name}": ${error.message}`)
       } else {
         successCount++
+
+        const insertedHomeId = (inserted as unknown as IdOnly | null)?.id
+
+        if (insertedHomeId && row.images) {
+          const imageUrls = splitMediaUrlList(row.images)
+
+          for (const [index, imageUrl] of imageUrls.entries()) {
+            try {
+              await importRemoteMedia({
+                supabase,
+                entityType: 'home',
+                entityId: insertedHomeId,
+                role: 'gallery',
+                sourceUrl: imageUrl,
+                preferredName: `${row.name || 'home'}-${index + 1}`,
+                title: row.name || null,
+                altText: row.name ? `${row.name} home photo` : 'Home photo',
+                sortOrder: index,
+              })
+            } catch (error) {
+              errors.push(`Image ${index + 1} for "${row.name}": ${error instanceof Error ? error.message : 'Import failed'}`)
+            }
+          }
+        }
       }
     }
 

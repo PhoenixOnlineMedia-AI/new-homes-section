@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, AlertCircle, Check, X, Download, Loader2 } from 'lucide-react'
+import { Upload, AlertCircle, Check, X, Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -20,12 +20,19 @@ import { cn } from '@/lib/utils'
 interface CSVUploadProps {
   template: CSVTemplate
   onUpload: (data: Record<string, string>[]) => Promise<{ success: boolean; message: string; errors?: string[] }>
+  batchSize?: number
 }
 
-export function CSVUpload({ template, onUpload }: CSVUploadProps) {
+export function CSVUpload({ template, onUpload, batchSize = 100 }: CSVUploadProps) {
   const [parseResult, setParseResult] = useState<CSVParseResult | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; errors?: string[] } | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{
+    processed: number
+    total: number
+    currentBatch: number
+    totalBatches: number
+  } | null>(null)
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -44,7 +51,8 @@ export function CSVUpload({ template, onUpload }: CSVUploadProps) {
 
       setParseResult(result)
       setUploadResult(null)
-    } catch (error) {
+      setUploadProgress(null)
+    } catch {
       setParseResult({
         data: [],
         headers: [],
@@ -78,13 +86,57 @@ export function CSVUpload({ template, onUpload }: CSVUploadProps) {
     if (!parseResult || parseResult.data.length === 0) return
 
     setIsUploading(true)
+    setUploadResult(null)
+
+    const total = parseResult.data.length
+    const totalBatches = Math.ceil(total / batchSize)
+    const errors: string[] = []
+    let successCount = 0
+
     try {
-      const result = await onUpload(parseResult.data)
-      setUploadResult(result)
+      for (let index = 0; index < totalBatches; index++) {
+        const start = index * batchSize
+        const batch = parseResult.data.slice(start, start + batchSize)
+
+        setUploadProgress({
+          processed: start,
+          total,
+          currentBatch: index + 1,
+          totalBatches,
+        })
+
+        const result = await onUpload(batch)
+        const processedMatch = result.message.match(/processed (\d+) of/i)
+        const processedCount = processedMatch ? Number(processedMatch[1]) : result.success ? batch.length : 0
+
+        successCount += Number.isFinite(processedCount) ? processedCount : 0
+
+        if (result.errors?.length) {
+          errors.push(...result.errors)
+        }
+
+        if (!result.success && !result.errors?.length) {
+          errors.push(result.message)
+        }
+
+        setUploadProgress({
+          processed: Math.min(start + batch.length, total),
+          total,
+          currentBatch: index + 1,
+          totalBatches,
+        })
+      }
+
+      setUploadResult({
+        success: errors.length === 0,
+        message: `Successfully processed ${successCount} of ${total} records`,
+        errors: errors.length > 0 ? errors : undefined,
+      })
     } catch (error) {
       setUploadResult({
         success: false,
         message: error instanceof Error ? error.message : 'Upload failed',
+        errors: errors.length > 0 ? errors : undefined,
       })
     } finally {
       setIsUploading(false)
@@ -94,6 +146,7 @@ export function CSVUpload({ template, onUpload }: CSVUploadProps) {
   const handleClear = () => {
     setParseResult(null)
     setUploadResult(null)
+    setUploadProgress(null)
   }
 
   const hasErrors = parseResult && parseResult.errors.length > 0
@@ -233,7 +286,7 @@ export function CSVUpload({ template, onUpload }: CSVUploadProps) {
                   {parseResult.errors.slice(0, 10).map((error, idx) => (
                     <li key={idx}>
                       Row {error.row}: {error.column && <span className="font-medium">{error.column}</span>} {error.message}
-                      {error.value && <span className="text-red-600"> ("{error.value}")</span>}
+                      {error.value && <span className="text-red-600"> (&quot;{error.value}&quot;)</span>}
                     </li>
                   ))}
                   {parseResult.errors.length > 10 && (
@@ -301,23 +354,49 @@ export function CSVUpload({ template, onUpload }: CSVUploadProps) {
 
             {/* Upload Button */}
             {hasData && !hasErrors && (
-              <Button
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading {parseResult.rowCount} records...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Upload {parseResult.rowCount} Records
-                  </>
+              <div className="space-y-4">
+                {uploadProgress && (
+                  <div className="rounded-lg border bg-gray-50 p-4">
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">
+                        Processing batch {uploadProgress.currentBatch} of {uploadProgress.totalBatches}
+                      </span>
+                      <span className="text-gray-500">
+                        {uploadProgress.processed} / {uploadProgress.total} rows
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                        style={{
+                          width: `${Math.max(2, Math.round((uploadProgress.processed / uploadProgress.total) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Large files are uploaded in batches of {batchSize} so the page can report progress and avoid request timeouts.
+                    </p>
+                  </div>
                 )}
-              </Button>
+
+                <Button
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className="w-full"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading {uploadProgress ? `${uploadProgress.processed} of ${uploadProgress.total}` : parseResult.rowCount} records...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Upload {parseResult.rowCount} Records
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

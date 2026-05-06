@@ -1,0 +1,10 @@
+{
+  "name": "New Homes Section",
+  "short_name": "New Homes",
+  "description": "Find new home builders and communities.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": []
+}

@@ -7,6 +7,7 @@ import {
   Building2,
   MapPin,
   Home,
+  ImageIcon,
   Upload,
   Settings,
   Users,
@@ -44,6 +45,11 @@ const navItems = [
     title: 'Homes',
     href: '/admin/homes',
     icon: Home,
+  },
+  {
+    title: 'Media',
+    href: '/admin/media',
+    icon: ImageIcon,
   },
   {
     title: 'Users',
