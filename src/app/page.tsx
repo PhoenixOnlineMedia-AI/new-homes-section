@@ -109,7 +109,7 @@ export default function HomePage() {
 
           <div className="text-center mt-8">
             <Button variant="outline" size="lg" asChild>
-              <Link href="/search">View All States</Link>
+              <Link href="/markets">View All States</Link>
             </Button>
           </div>
         </div>

@@ -105,7 +105,7 @@ export function HeroSearch() {
               </Link>
             ))}
             <Link
-              href="#states"
+              href="/markets"
               className="px-4 py-1.5 text-sm text-white hover:text-re-green-300 transition-colors font-medium drop-shadow-sm"
             >
               View all →

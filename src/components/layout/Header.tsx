@@ -11,7 +11,7 @@ const mainNavItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/builders', label: 'Find Builders', icon: Building2 },
   { href: '/search', label: 'Communities', icon: Search },
-  { href: '/#states', label: 'Markets', icon: MapPin },
+  { href: '/markets', label: 'Markets', icon: MapPin },
 ]
 
 export function Header() {

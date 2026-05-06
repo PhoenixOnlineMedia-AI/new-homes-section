@@ -4,7 +4,7 @@ import { APP_NAME, APP_DESCRIPTION, SOCIAL_LINKS, CONTACT_INFO, POPULAR_STATES }
 
 const footerLinks = {
   browse: [
-    { label: 'New Homes by State', href: '/#states' },
+    { label: 'New Homes by State', href: '/markets' },
     { label: 'New Homes by City', href: '/' },
     { label: 'New Home Builders', href: '/builders' },
     { label: 'New Home Communities', href: '/search' },
