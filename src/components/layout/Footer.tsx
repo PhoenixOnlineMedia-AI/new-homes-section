@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { Home, Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react'
-import { APP_NAME, APP_DESCRIPTION, SOCIAL_LINKS, CONTACT_INFO, POPULAR_STATES } from '@/lib/constants'
+import { APP_NAME, SOCIAL_LINKS, CONTACT_INFO, POPULAR_STATES } from '@/lib/constants'
 
 const footerLinks = {
   browse: [
-    { label: 'New Homes by State', href: '/markets' },
-    { label: 'New Homes by City', href: '/' },
+    { label: 'Builders by State', href: '/markets' },
+    { label: 'Builders by City', href: '/markets' },
     { label: 'New Home Builders', href: '/builders' },
-    { label: 'New Home Communities', href: '/search' },
+    { label: 'Contact a Builder', href: '/contact' },
   ],
   resources: [
     { label: 'Home Buying Guide', href: '/' },
@@ -44,7 +44,7 @@ export function Footer() {
               <span className="text-lg font-bold text-white group-hover:text-re-emerald-400 transition-colors">{APP_NAME}</span>
             </Link>
             <p className="text-sm text-slate-400 mb-6 max-w-xs leading-relaxed">
-              {APP_DESCRIPTION}
+              Browse verified homebuilder profiles by state and city. Community and home inventory is coming Q3 2026.
             </p>
             <div className="flex gap-3">
               <a 
@@ -173,7 +173,7 @@ export function Footer() {
             {POPULAR_STATES.map((state) => (
               <Link
                 key={state.code}
-                href={`/${state.slug}`}
+                href={`/builders/${state.slug}`}
                 className="px-4 py-2 text-sm bg-slate-800/50 hover:bg-re-blue-800 text-slate-300 hover:text-white rounded-lg transition-all border border-slate-700/30 hover:border-re-blue-600/50"
               >
                 {state.name}

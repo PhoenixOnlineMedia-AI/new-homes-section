@@ -9,10 +9,7 @@ import { BuilderCard } from '@/components/builders/BuilderCard'
 import { US_STATES, APP_NAME, APP_URL } from '@/lib/constants'
 import {
   Building2,
-  Home,
   ArrowRight,
-  TrendingUp,
-  DollarSign,
   Users
 } from 'lucide-react'
 
@@ -32,26 +29,24 @@ export async function generateMetadata({ params }: StatePageProps): Promise<Meta
     return {}
   }
 
-  const title = `New Homes in ${stateInfo.name} (${stateInfo.code}) | ${APP_NAME}`
-  const description = `Find new construction homes and communities in ${stateInfo.name}. Browse ${stateInfo.name} builders, view floor plans, pricing, and availability.`
+  const title = `Homebuilders in ${stateInfo.name} (${stateInfo.code}) | ${APP_NAME}`
+  const description = `Find verified new construction builders in ${stateInfo.name}. Browse state and city builder directories.`
 
   return {
     title,
     description,
     keywords: [
-      `new homes ${stateInfo.name}`,
       `new construction ${stateInfo.name}`,
       `${stateInfo.name} home builders`,
-      `${stateInfo.name} new communities`,
-      `buy new home ${stateInfo.name}`,
+      `${stateInfo.name} builders directory`,
     ],
     openGraph: {
       title,
       description,
-      url: `${APP_URL}/${stateInfo.slug}`,
+      url: `${APP_URL}/builders/${stateInfo.slug}`,
     },
     alternates: {
-      canonical: `/${stateInfo.slug}`,
+      canonical: `/builders/${stateInfo.slug}`,
     },
   }
 }
@@ -259,19 +254,18 @@ export default async function StatePage({ params }: StatePageProps) {
       return a.name.localeCompare(b.name)
     })
 
-  const totalHomes = communities.reduce((sum, c) => sum + (c.total_homes || c.home_count || 0), 0)
-
-  const pageUrl = `${APP_URL}/${stateInfo.slug}`
+  const pageUrl = `${APP_URL}/builders/${stateInfo.slug}`
 
   // Generate structured data
   const breadcrumbData = generateBreadcrumbSchema([
     { name: 'Home', item: APP_URL },
+    { name: 'Builders', item: `${APP_URL}/builders` },
     { name: stateInfo.name, item: pageUrl },
   ])
 
   const placeData = generatePlaceSchema({
-    name: `New Homes in ${stateInfo.name}`,
-    description: `Find new construction homes and communities in ${stateInfo.name}.`,
+    name: `Homebuilders in ${stateInfo.name}`,
+    description: `Find new construction builders in ${stateInfo.name}.`,
     address: stateInfo.name,
     city: '',
     state: stateInfo.code,
@@ -299,24 +293,15 @@ export default async function StatePage({ params }: StatePageProps) {
 
             <div className="max-w-3xl">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-                New Homes in {stateInfo.name}
+                Homebuilders in {stateInfo.name}
               </h1>
               <p className="text-lg text-slate-300 mb-6">
-                Discover {communities.length} new construction homes and communities
-                across {stateInfo.name}. Browse top builders, compare prices, and find your
-                dream home.
+                Browse verified builders serving {stateInfo.name}. City-level builder
+                directories are available where market data has been added.
               </p>
 
               {/* Quick Stats */}
               <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <Home className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm"><strong>{totalHomes > 0 ? totalHomes + '+' : 'New'}</strong> Homes</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm"><strong>{communities.length > 0 ? communities.length : 'New'}</strong> Communities</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-emerald-400" />
                   <span className="text-sm"><strong>{stateBuilders.length > 0 ? stateBuilders.length : 'Top'}</strong> Builders</span>
@@ -335,11 +320,11 @@ export default async function StatePage({ params }: StatePageProps) {
                   Top Builders in {stateInfo.name}
                 </h2>
                 <p className="text-slate-600">
-                  Discover top-rated builders and their exceptional communities
+                  Discover top-rated builders serving this state
                 </p>
               </div>
               <Button variant="outline" className="mt-4 md:mt-0" asChild>
-                <Link href={`/markets/${stateInfo.slug}/builders`}>View All Builders <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                <Link href={`/builders/${stateInfo.slug}`}>View All Builders <ArrowRight className="h-4 w-4 ml-1" /></Link>
               </Button>
             </div>
 
@@ -377,7 +362,7 @@ export default async function StatePage({ params }: StatePageProps) {
                               {builder.name}
                             </Link>
                             <p className="text-xs text-slate-500 mt-1 line-clamp-2">{builder.description}</p>
-                            <p className="text-xs text-slate-600 mt-2">{builder.stateCommunityCount} communities in {stateInfo.code}</p>
+                            <p className="text-xs text-slate-600 mt-2">Active in {stateInfo.code}</p>
                           </div>
                         </div>
                         <Button className="w-full mt-3" size="sm" variant="outline" asChild>
@@ -401,11 +386,11 @@ export default async function StatePage({ params }: StatePageProps) {
                   Explore Markets in {stateInfo.name}
                 </h2>
                 <p className="text-slate-600">
-                  Jump directly to city market pages to browse builders and communities.
+                  Jump directly to city market pages to browse local builders.
                 </p>
               </div>
               <Button variant="outline" asChild>
-                <Link href={`/markets/${stateInfo.slug}/builders`}>
+                  <Link href={`/builders/${stateInfo.slug}`}>
                   Browse State Builder Directory
                 </Link>
               </Button>
@@ -414,7 +399,7 @@ export default async function StatePage({ params }: StatePageProps) {
             {stateMarkets.length > 0 ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {stateMarkets.map((market) => (
-                  <Link key={market.slug} href={`/${stateInfo.slug}/${market.slug}`}>
+                  <Link key={market.slug} href={`/builders/${stateInfo.slug}/${market.slug}`}>
                     <Card className="h-full border-slate-200 hover:shadow-md transition-shadow hover:border-emerald-200">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-2">
@@ -422,7 +407,6 @@ export default async function StatePage({ params }: StatePageProps) {
                             <p className="font-semibold text-slate-900">{market.name}</p>
                             <p className="text-xs text-slate-500 mt-1">
                               {market.builderCount} builders
-                              {market.communityCount > 0 ? ` • ${market.communityCount} communities` : ''}
                             </p>
                           </div>
                           <ArrowRight className="h-4 w-4 text-slate-400 mt-1" />
@@ -438,58 +422,6 @@ export default async function StatePage({ params }: StatePageProps) {
           </div>
         </section>
 
-        {/* Market Insights */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">
-              {stateInfo.name} New Home Market
-            </h2>
-
-            <div className="grid sm:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <DollarSign className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Median Price</p>
-                      <p className="text-2xl font-bold text-slate-900">$425K</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Price Trend</p>
-                      <p className="text-2xl font-bold text-emerald-600">+5.2%</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                      <Home className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Avg. Square Feet</p>
-                      <p className="text-2xl font-bold text-slate-900">2,450</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   )

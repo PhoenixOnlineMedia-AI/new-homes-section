@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Menu, Search, Home, MapPin, Building2, X } from 'lucide-react'
+import { Menu, Home, MapPin, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { APP_NAME, APP_TAGLINE } from '@/lib/constants'
@@ -10,7 +10,6 @@ import { APP_NAME, APP_TAGLINE } from '@/lib/constants'
 const mainNavItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/builders', label: 'Find Builders', icon: Building2 },
-  { href: '/search', label: 'Communities', icon: Search },
   { href: '/markets', label: 'Markets', icon: MapPin },
 ]
 
@@ -50,7 +49,7 @@ export function Header() {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Button variant="cta" size="sm" asChild>
-            <Link href="/search">Get Started</Link>
+            <Link href="/builders">Browse Builders</Link>
           </Button>
         </div>
 
@@ -96,8 +95,8 @@ export function Header() {
               {/* Mobile CTA */}
               <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-slate-100">
                 <Button variant="cta" asChild>
-                  <Link href="/search" onClick={() => setIsOpen(false)}>
-                    Get Started
+                  <Link href="/builders" onClick={() => setIsOpen(false)}>
+                    Browse Builders
                   </Link>
                 </Button>
               </div>

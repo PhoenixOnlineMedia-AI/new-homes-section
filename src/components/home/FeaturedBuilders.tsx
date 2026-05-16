@@ -8,8 +8,6 @@ import {
   Building2, 
   Star, 
   MapPin, 
-  Home, 
-  TrendingUp,
   CheckCircle2,
   Award,
   ArrowRight
@@ -155,7 +153,7 @@ export function FeaturedBuilders({ limit = 4, showViewAll = true }: FeaturedBuil
               Featured Builders
             </h2>
             <p className="text-slate-600">
-              Discover top-rated builders and their exceptional communities
+              Discover verified builders and the markets they serve
             </p>
           </div>
           {showViewAll && (
@@ -215,20 +213,6 @@ export function FeaturedBuilders({ limit = 4, showViewAll = true }: FeaturedBuil
                           {builder.description}
                         </p>
 
-                        {/* Stats */}
-                        <div className="flex flex-wrap items-center gap-3 text-sm mb-3">
-                          <div className="flex items-center gap-1">
-                            <Home className="h-4 w-4 text-emerald-600" />
-                            <span className="font-medium">{builder.communitiesCount}</span>
-                            <span className="text-slate-500">communities</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            <span className="font-medium">{builder.homesBuilt.toLocaleString()}+</span>
-                            <span className="text-slate-500">homes</span>
-                          </div>
-                        </div>
-
                         {/* Markets */}
                         <div className="flex flex-wrap items-center gap-1 mb-3">
                           <span className="text-xs text-slate-500 mr-1">Building in:</span>
@@ -248,11 +232,7 @@ export function FeaturedBuilders({ limit = 4, showViewAll = true }: FeaturedBuil
                           )}
                         </div>
 
-                        {/* Price Range */}
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-emerald-600">
-                            {builder.priceRange.label}
-                          </span>
                           {builder.isVerified && (
                             <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -264,24 +244,21 @@ export function FeaturedBuilders({ limit = 4, showViewAll = true }: FeaturedBuil
                     </div>
                   </div>
 
-                  {/* Featured Communities - Right Side */}
+                  {/* Builder CTA - Right Side */}
                   <div className="sm:w-56 bg-slate-50 p-4 border-t sm:border-t-0 sm:border-l border-slate-100">
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
-                      Featured Communities
+                      Builder markets
                     </p>
                     <div className="space-y-2">
-                      {builder.featuredCommunities.map((community) => (
+                      {builder.activeMarkets.slice(0, 4).map((market) => (
                         <Link
-                          key={community.name}
-                          href={`/builders/${builder.slug}/communities/${community.name.toLowerCase().replace(/\s+/g, '-')}`}
+                          key={market}
+                          href={`/builders/${builder.slug}`}
                           className="block p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all group/community"
                         >
                           <p className="text-sm font-medium text-slate-900 group-hover/community:text-emerald-600 transition-colors">
-                            {community.name}
-                          </p>
-                          <p className="text-xs text-slate-500 flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            {community.city}, {community.state}
+                            {market}
                           </p>
                         </Link>
                       ))}
@@ -308,10 +285,10 @@ export function FeaturedBuilders({ limit = 4, showViewAll = true }: FeaturedBuil
         {/* Trust Indicators */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { value: '50+', label: 'Partner Builders' },
-            { value: '2,500+', label: 'Communities' },
-            { value: '1M+', label: 'Homes Delivered' },
-            { value: '4.5', label: 'Avg. Builder Rating' },
+            { value: '200+', label: 'Builders' },
+            { value: '50+', label: 'Markets' },
+            { value: 'Local', label: 'City Pages' },
+            { value: 'Verified', label: 'Profiles' },
           ].map((stat) => (
             <div key={stat.label} className="p-4">
               <p className="text-2xl md:text-3xl font-bold text-emerald-600">{stat.value}</p>

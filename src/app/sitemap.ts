@@ -36,13 +36,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.95,
     },
-    // Search page
-    {
-      url: `${APP_URL}/search`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
     // Markets directory
     {
       url: `${APP_URL}/markets`,
@@ -80,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Add state pages
   US_STATES.forEach((state) => {
     routes.push({
-      url: `${APP_URL}/${state.slug}/`,
+      url: `${APP_URL}/builders/${state.slug}/`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
@@ -123,7 +116,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Add city pages
   cityRoutes.forEach(({ state, city }) => {
     routes.push({
-      url: `${APP_URL}/${state}/${city}/`,
+      url: `${APP_URL}/builders/${state}/${city}/`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,

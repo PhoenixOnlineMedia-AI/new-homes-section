@@ -9,14 +9,14 @@ import { APP_NAME, APP_URL, POPULAR_STATES, US_STATES } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: `New Home Markets | ${APP_NAME}`,
-  description: 'Browse new construction home markets by state and city. Compare builders, communities, and local market guides across the United States.',
+  title: `Browse Builders by Market | ${APP_NAME}`,
+  description: 'Browse new construction builder markets by state and city. Compare verified builders and local market guides across the United States.',
   alternates: {
     canonical: '/markets',
   },
   openGraph: {
-    title: `New Home Markets | ${APP_NAME}`,
-    description: 'Browse new construction home markets by state and city.',
+    title: `Browse Builders by Market | ${APP_NAME}`,
+    description: 'Browse new construction builder markets by state and city.',
     url: `${APP_URL}/markets`,
   },
 }
@@ -232,12 +232,12 @@ export default async function MarketsPage() {
             </nav>
 
             <div className="max-w-3xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-300">New home markets</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-300">Builder markets</p>
               <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-                Browse new construction markets by state
+                Browse builders by market
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200 md:text-lg">
-                Start with a state, then drill into city market pages with local builders, communities, and market guides as they become available.
+                Start with a state, then drill into city market pages with local builders and market guides as they become available.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -248,7 +248,7 @@ export default async function MarketsPage() {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white hover:text-slate-950" asChild>
-                  <Link href="/search">Search communities</Link>
+                  <Link href="/builders">Browse builders</Link>
                 </Button>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default async function MarketsPage() {
                 { label: 'Active states', value: totals.states || US_STATES.length },
                 { label: 'City markets', value: totals.cities },
                 { label: 'Builders indexed', value: activeStates.reduce((sum, state) => sum + state.builderCount, 0) },
-                { label: 'Communities', value: totals.communities },
+                { label: 'Market guides', value: activeStates.reduce((sum, state) => sum + state.guideCount, 0) },
               ].map((stat) => (
                 <div key={stat.label} className="bg-slate-950/55 p-4 backdrop-blur-sm">
                   <p className="text-2xl font-bold text-white">{formatCount(stat.value)}</p>
@@ -286,7 +286,7 @@ export default async function MarketsPage() {
                 {featuredStates.map((state) => (
                   <Link
                     key={state.code}
-                    href={`/${state.slug}`}
+                    href={`/builders/${state.slug}`}
                     className="group rounded-lg border border-slate-200 bg-white p-5 transition-all hover:border-emerald-300 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -305,8 +305,8 @@ export default async function MarketsPage() {
                         <p className="text-xs text-slate-500">Builders</p>
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-950">{state.communityCount}</p>
-                        <p className="text-xs text-slate-500">Communities</p>
+                        <p className="font-semibold text-slate-950">{state.cityCount}</p>
+                        <p className="text-xs text-slate-500">Cities</p>
                       </div>
                       <div>
                         <p className="font-semibold text-slate-950">{state.guideCount}</p>
@@ -336,7 +336,7 @@ export default async function MarketsPage() {
               <p className="mb-2 text-sm font-semibold text-emerald-700">State directory</p>
               <h2 className="text-2xl font-bold text-slate-950 md:text-3xl">All new home markets</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Every state keeps its existing URL structure. State pages live at <span className="font-medium text-slate-900">/state</span>, and city markets live at <span className="font-medium text-slate-900">/state/city</span>.
+                State builder pages live at <span className="font-medium text-slate-900">/builders/state</span>, and city markets live at <span className="font-medium text-slate-900">/builders/state/city</span>.
               </p>
             </div>
 
@@ -344,7 +344,7 @@ export default async function MarketsPage() {
               {states.map((state) => (
                 <Link
                   key={state.code}
-                  href={`/${state.slug}`}
+                  href={`/builders/${state.slug}`}
                   className="group flex items-center justify-between gap-4 border-t border-slate-200 py-4 transition-colors hover:border-emerald-300"
                 >
                   <div className="min-w-0">
@@ -380,7 +380,7 @@ export default async function MarketsPage() {
                 {guideCities.map(({ state, ...city }) => (
                   <Link
                     key={`${state.code}-${city.slug}`}
-                    href={`/${state.slug}/${city.slug}`}
+                    href={`/builders/${state.slug}/${city.slug}`}
                     className="group rounded-lg border border-slate-200 p-4 transition-all hover:border-emerald-300 hover:bg-emerald-50/40"
                   >
                     <MapPin className="mb-3 h-5 w-5 text-emerald-600" />
@@ -399,14 +399,14 @@ export default async function MarketsPage() {
               <div>
                 <h2 className="text-2xl font-bold">Need to narrow the list?</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                  Search by city, builder, price range, and community details when you are ready to compare actual new home options.
+                  Search by city, builder name, or state while community and home inventory is prepared for launch.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button variant="cta" asChild>
-                  <Link href="/search">
+                  <Link href="/builders">
                     <Search className="h-4 w-4" />
-                    Search communities
+                    Browse builders
                   </Link>
                 </Button>
                 <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white hover:text-slate-950" asChild>

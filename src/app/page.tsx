@@ -4,14 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { POPULAR_STATES, APP_NAME } from '@/lib/constants'
+import { LAUNCH_BANNER } from '@/lib/launch'
 import { 
   MapPin, 
   Building2, 
-  Home, 
   TrendingUp, 
   Shield, 
   Clock,
-  ArrowRight,
   CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
@@ -19,9 +18,9 @@ import Link from 'next/link'
 // Features for the why choose us section
 const features = [
   {
-    icon: Home,
-    title: 'Exclusive New Construction',
-    description: 'Access thousands of new homes and communities not listed on other sites.',
+    icon: Building2,
+    title: 'Builder-First Directory',
+    description: 'Browse verified national, regional, and local builders by the markets they serve.',
   },
   {
     icon: Shield,
@@ -30,13 +29,13 @@ const features = [
   },
   {
     icon: TrendingUp,
-    title: 'Price Transparency',
-    description: 'See actual prices, incentives, and availability in real-time.',
+    title: 'Market Visibility',
+    description: 'See where builders are active before community and home inventory goes live.',
   },
   {
     icon: Clock,
     title: 'Save Time',
-    description: 'Compare floor plans, amenities, and neighborhoods all in one place.',
+    description: 'Verified builder profiles include direct links to their local markets.',
   },
 ]
 
@@ -45,6 +44,13 @@ export default function HomePage() {
     <>
       {/* Hero Search Section */}
       <HeroSearch />
+
+      {/* Featured Builders Section */}
+      <section className="border-y border-emerald-200 bg-emerald-50 py-3">
+        <div className="container mx-auto px-4 text-center text-sm font-medium text-emerald-900">
+          {LAUNCH_BANNER}
+        </div>
+      </section>
 
       {/* Featured Builders Section */}
       <FeaturedBuilders limit={4} showViewAll={true} />
@@ -57,8 +63,8 @@ export default function HomePage() {
               Why Choose {APP_NAME}?
             </h2>
             <p className="text-slate-600">
-              We make finding your new home easier with the largest selection 
-              of new construction homes and communities.
+              We make it easier to find trusted builders by location now, with
+              community and home inventory rolling out next.
             </p>
           </div>
 
@@ -83,10 +89,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
-              Browse New Homes by State
+              Browse Builders by State
             </h2>
             <p className="text-slate-600">
-              Find new construction homes and communities in your desired location
+              Start with a state directory, then drill into city-level builder markets.
             </p>
           </div>
 
@@ -94,7 +100,7 @@ export default function HomePage() {
             {POPULAR_STATES.map((state) => (
               <Link
                 key={state.code}
-                href={`/${state.slug}`}
+                href={`/builders/${state.slug}`}
                 className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-re-blue-500 hover:bg-re-blue-50 transition-all group"
               >
                 <span className="font-medium text-slate-700 group-hover:text-emerald-700">
@@ -123,7 +129,7 @@ export default function HomePage() {
               How It Works
             </h2>
             <p className="text-slate-400">
-              Your journey to a new home in three simple steps
+              Find the right builder in three simple steps
             </p>
           </div>
 
@@ -131,18 +137,18 @@ export default function HomePage() {
             {[
               {
                 step: '01',
-                title: 'Search Communities',
-                description: 'Browse thousands of new home communities by location, price, and amenities.',
+                title: 'Browse Builders',
+                description: 'Start with verified builder profiles and compare national, regional, and local options.',
               },
               {
                 step: '02',
-                title: 'Compare Homes',
-                description: 'View floor plans, pricing, photos, and detailed community information.',
+                title: 'View Their Markets',
+                description: 'See the states and cities where each builder is active.',
               },
               {
                 step: '03',
-                title: 'Connect with Builders',
-                description: 'Schedule tours, request information, and start your home buying journey.',
+                title: 'Contact Builder',
+                description: 'Visit the builder online or reach out through their profile when you are ready.',
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
@@ -160,14 +166,14 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Ready to Find Your New Home?
+              Ready to Find Your Builder?
             </h2>
             <p className="text-emerald-100 mb-8 text-lg">
-              Join thousands of home buyers who found their perfect new construction home through {APP_NAME}.
+              Explore verified builder profiles and local markets on {APP_NAME}.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-white text-re-blue-900 hover:bg-slate-100 shadow-lg" asChild>
-                <Link href="/search">Start Your Search</Link>
+                <Link href="/builders">Browse Builders</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-re-blue-800 hover:border-white" asChild>
                 <Link href="/contact">Contact Us</Link>

@@ -1,13 +1,91 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { Building2, MapPin, Star, Home, TrendingUp, Award, CheckCircle2, BedDouble, Bath, Maximize } from 'lucide-react'
+import { Building2, MapPin, Star, Award, CheckCircle2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { APP_NAME, APP_URL, US_STATES } from '@/lib/constants'
+import StateBuildersPage, { generateMetadata as generateStateBuildersMetadata } from '@/app/markets/[state]/builders/page'
 
-export default async function BuilderProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+type BuilderProfileProps = {
+    params: Promise<{ slug: string }>
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+type BuilderSummary = {
+    name: string
+    description: string | null
+    slug: string
+}
+
+type BuilderRecord = BuilderSummary & {
+    id: string
+    logo_url?: string | null
+    website?: string | null
+    rating?: number | null
+    review_count?: number | null
+    headquarters?: string | null
+    year_founded?: number | null
+    is_verified?: boolean | null
+    is_premium?: boolean | null
+}
+
+function stateNameFromCode(code: string) {
+    return US_STATES.find((state) => state.code.toUpperCase() === code.toUpperCase())?.name || code
+}
+
+export async function generateMetadata(props: BuilderProfileProps): Promise<Metadata> {
+    const { slug } = await props.params
+    const stateInfo = US_STATES.find((state) => state.slug === slug.toLowerCase())
+
+    if (stateInfo) {
+        return generateStateBuildersMetadata({
+            params: Promise.resolve({ state: stateInfo.slug }),
+            searchParams: Promise.resolve({}),
+        })
+    }
+
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('builders')
+        .select('name,description,slug')
+        .eq('slug', slug)
+        .maybeSingle()
+    const builder = data as BuilderSummary | null
+
+    if (!builder) return {}
+
+    const title = `${builder.name} Homebuilder Profile | ${APP_NAME}`
+    const description = builder.description || `Learn about ${builder.name}, the states they serve, and where to find their local builder markets.`
+
+    return {
+        title,
+        description,
+        alternates: {
+            canonical: `/builders/${builder.slug}`,
+        },
+        openGraph: {
+            title,
+            description,
+            url: `${APP_URL}/builders/${builder.slug}`,
+        },
+    }
+}
+
+export default async function BuilderProfilePage({ params, searchParams }: BuilderProfileProps) {
     const { slug } = await params
+    const stateInfo = US_STATES.find((state) => state.slug === slug.toLowerCase())
+
+    if (stateInfo) {
+        return (
+            <StateBuildersPage
+                params={Promise.resolve({ state: stateInfo.slug })}
+                searchParams={searchParams || Promise.resolve({})}
+            />
+        )
+    }
+
     const supabase = await createClient()
 
     // Fetch from the real database using the slug
@@ -16,7 +94,7 @@ export default async function BuilderProfilePage({ params }: { params: Promise<{
         .select('*')
         .eq('slug', slug)
         .single()
-    const builder: any = data
+    const builder = data as BuilderRecord | null
 
     if (error || !builder) {
         notFound()
@@ -36,13 +114,27 @@ export default async function BuilderProfilePage({ params }: { params: Promise<{
         .eq('builder_id', builder.id)
     const builderMarkets: any[] = builderMarketsData || []
 
-    const citiesFromCommunities = communities.map(c => c.city).filter(Boolean)
-    const citiesFromBuilderMarkets = builderMarkets.map(m => m.city).filter(Boolean)
-    const uniqueMarkets = new Set([...citiesFromCommunities, ...citiesFromBuilderMarkets]).size
-    
-    const totalHomes = communities.reduce((acc, curr) => acc + (curr.home_count || 0), 0)
+    const activeStateCodes = Array.from(new Set([
+        ...communities.map((community) => (community.state_code || community.state || '').toUpperCase()),
+        ...builderMarkets.map((market) => (market.state_code || '').toUpperCase()),
+    ])).filter(Boolean).sort()
 
     return (
+        <>
+        <JsonLd data={{
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: builder.name,
+            description: builder.description,
+            url: builder.website || `${APP_URL}/builders/${builder.slug}`,
+            sameAs: builder.website ? [builder.website] : undefined,
+            aggregateRating: builder.rating ? {
+                '@type': 'AggregateRating',
+                ratingValue: builder.rating,
+                reviewCount: builder.review_count || 0,
+            } : undefined,
+        }} />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-8">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
@@ -100,95 +192,61 @@ export default async function BuilderProfilePage({ params }: { params: Promise<{
                 </div>
             </div>
 
-            {/* Missing Mock Information usually rendered on pages */}
             <h2 className="text-2xl font-bold text-slate-900 mb-6">About {builder.name}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Home className="h-5 w-5 text-emerald-600" />
-                        <span className="font-semibold text-slate-900">Total Communities</span>
-                    </div>
-                    <p className="text-2xl font-bold text-emerald-700">{communities.length}</p>
-                </div>
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-3 mb-2">
-                        <TrendingUp className="h-5 w-5 text-blue-600" />
-                        <span className="font-semibold text-slate-900">Total Available Homes</span>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-700">{totalHomes > 0 ? totalHomes : 'N/A'}</p>
-                </div>
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-3 mb-2">
-                        <MapPin className="h-5 w-5 text-purple-600" />
-                        <span className="font-semibold text-slate-900">Markets</span>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-700">{uniqueMarkets}</p>
-                </div>
+            <div className="mb-12 rounded-xl border border-slate-200 bg-slate-50 p-6">
+                <p className="max-w-4xl text-slate-700 leading-7">
+                    {builder.name} is listed in the New Homes Section builder directory with
+                    market coverage and profile information for buyers researching new
+                    construction builders. Community and home inventory is coming soon.
+                </p>
             </div>
 
-            {communities.length > 0 && (
-                <>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Communities by {builder.name}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        {communities.map((community: any) => (
-                            <Card key={community.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="relative h-48 bg-slate-200 flex items-center justify-center">
-                                    {community.images?.[0] ? (
-                                        <img src={community.images[0]} alt={community.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <Building2 className="h-12 w-12 text-slate-400" />
-                                    )}
-                                    <Badge className="absolute top-3 left-3 bg-emerald-600">
-                                        {community.home_count || 0} Homes
-                                    </Badge>
-                                </div>
-
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-lg">{community.name}</CardTitle>
-                                    <CardDescription className="flex items-center gap-1">
-                                        <MapPin className="h-3 w-3" />
-                                        {community.city}, {community.state_code}
-                                    </CardDescription>
-                                </CardHeader>
-
-                                <CardContent className="space-y-3">
-                                    <p className="text-xl font-semibold text-slate-900">
-                                        {community.min_price || community.max_price
-                                            ? `$${(community.min_price || 0).toLocaleString()} ${community.max_price ? `- $${community.max_price.toLocaleString()}` : '+'}`
-                                            : 'Pricing Unavailable'}
-                                    </p>
-
-                                    <div className="flex items-center gap-4 text-sm text-slate-600">
-                                        <span className="flex items-center gap-1">
-                                            <BedDouble className="h-4 w-4" /> {community.min_bedrooms ? `${community.min_bedrooms}-${community.max_bedrooms || community.min_bedrooms}` : 'N/A'}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Bath className="h-4 w-4" /> {community.min_bathrooms ? `${community.min_bathrooms}-${community.max_bathrooms || community.min_bathrooms}` : 'N/A'}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Maximize className="h-4 w-4" /> {community.min_sqft ? `${community.min_sqft.toLocaleString()}+ sqft` : 'N/A sqft'}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-1.5 pt-2">
-                                        {(community.amenities || []).slice(0, 3).map((tag: string) => (
-                                            <Badge key={tag} variant="secondary" className="text-xs">
-                                                {tag}
-                                            </Badge>
-                                        ))}
-                                    </div>
-
-                                    <Button className="w-full mt-2" variant="outline" asChild>
-                                        <Link href={`/${(community.state || community.state_code || '').toLowerCase().replace(/\\s+/g, '-')}/${(community.city || '').toLowerCase().replace(/\\s+/g, '-')}/${builder.slug}/${community.slug}`}>
-                                            View Community
-                                        </Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
+            {activeStateCodes.length > 0 && (
+                <section className="mb-12">
+                    <div className="mb-5 flex items-end justify-between gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">Builder Markets</h2>
+                            <p className="mt-1 text-slate-600">
+                                Explore state-specific profiles and local builder directories.
+                            </p>
+                        </div>
                     </div>
-                </>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {activeStateCodes.slice(0, 10).map((stateCode) => {
+                            const state = US_STATES.find((item) => item.code === stateCode)
+                            if (!state) return null
+
+                            return (
+                                <Link
+                                    key={state.code}
+                                    href={`/builders/${builder.slug}/${state.slug}`}
+                                    className="rounded-lg border border-slate-200 bg-white p-4 transition hover:border-emerald-300 hover:shadow-md"
+                                >
+                                    <p className="font-semibold text-slate-950">{builder.name} in {state.name}</p>
+                                    <p className="mt-1 text-sm text-slate-600">Learn about {builder.name}&apos;s {state.name} market presence.</p>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                    {activeStateCodes.length > 10 && (
+                        <details className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+                            <summary className="cursor-pointer font-semibold text-slate-900">View all markets</summary>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {activeStateCodes.slice(10).map((stateCode) => {
+                                    const state = US_STATES.find((item) => item.code === stateCode)
+                                    if (!state) return null
+                                    return (
+                                        <Link key={state.code} href={`/builders/${builder.slug}/${state.slug}`} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                                            {stateNameFromCode(stateCode)}
+                                        </Link>
+                                    )
+                                })}
+                            </div>
+                        </details>
+                    )}
+                </section>
             )}
         </div>
+        </>
     )
 }

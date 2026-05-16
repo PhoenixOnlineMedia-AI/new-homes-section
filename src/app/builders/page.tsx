@@ -5,23 +5,21 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BuilderCard } from '@/components/builders/BuilderCard'
 import { BuildersFilter } from '@/components/builders/BuildersFilter'
-import { US_STATES, APP_NAME, APP_DESCRIPTION } from '@/lib/constants'
+import { US_STATES, APP_NAME } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/server'
 import {
   Building2,
   MapPin,
   Star,
-  TrendingUp,
   Search,
   Award,
   Users,
-  ArrowRight
 } from 'lucide-react'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Find New Home Builders',
-  description: `Browse top-rated new home builders across the US. Discover ${APP_NAME}'s comprehensive directory of national and regional builders, their communities, and available home plans.`,
+  description: `Browse verified new home builders across the US. Discover ${APP_NAME}'s directory of national, regional, and local builders by market.`,
   keywords: [
     'new home builders',
     'home builders directory',
@@ -32,38 +30,13 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: `Find New Home Builders | ${APP_NAME}`,
-    description: 'Browse top-rated new home builders and their communities across the US.',
+    description: 'Browse verified new home builders and their markets across the US.',
   },
 }
 
 // We will fetch builders from Supabase in the component
 
 // Stats for the page
-const stats = [
-  { icon: Building2, value: '50+', label: 'Builders' },
-  { icon: MapPin, value: '200+', label: 'Markets' },
-  { icon: Users, value: '2,500+', label: 'Communities' },
-  { icon: Star, value: '4.5', label: 'Avg. Rating' },
-]
-
-
-const communityTypeOptions = [
-  { label: 'Single Family', value: 'single-family' },
-  { label: 'Townhomes', value: 'townhomes' },
-  { label: 'Condos', value: 'condos' },
-  { label: '55+ Communities', value: '55-plus' },
-  { label: 'Luxury', value: 'luxury' },
-  { label: 'Active Adult', value: 'active-adult' },
-]
-
-const priceRangeOptions = [
-  { label: 'Under $300k', min: 0, max: 300000 },
-  { label: '$300k - $500k', min: 300000, max: 500000 },
-  { label: '$500k - $750k', min: 500000, max: 750000 },
-  { label: '$750k - $1M', min: 750000, max: 1000000 },
-  { label: '$1M+', min: 1000000, max: null },
-]
-
 const builderSizeOptions = [
   { label: 'National (20+ states)', value: 'national' },
   { label: 'Regional (5-19 states)', value: 'regional' },
@@ -79,9 +52,8 @@ export default async function BuildersDirectoryPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
+  const query = typeof searchParams.q === 'string' ? searchParams.q.trim().toLowerCase() : ''
   const selectedMarkets = typeof searchParams.market === 'string' ? searchParams.market.split(',') : []
-  const selectedTypes = typeof searchParams.type === 'string' ? searchParams.type.split(',') : []
-  const selectedPrices = typeof searchParams.price === 'string' ? searchParams.price.split(',') : []
   const selectedSizes = typeof searchParams.size === 'string' ? searchParams.size.split(',') : []
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
 
@@ -165,6 +137,23 @@ export default async function BuildersDirectoryPage(props: {
     }
   })
 
+  if (query) {
+    displayBuilders = displayBuilders.filter((builder) => {
+      const haystack = [
+        builder.name,
+        builder.description,
+        builder.headquarters,
+        ...builder.activeMarkets,
+        ...safeArray(builder.builder_markets).map((market: any) => market.city),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  }
+
   // Apply filters in-memory
   if (selectedMarkets.length > 0) {
     displayBuilders = displayBuilders.filter(b =>
@@ -172,21 +161,11 @@ export default async function BuildersDirectoryPage(props: {
     )
   }
 
-  if (selectedTypes.length > 0) {
-    displayBuilders = displayBuilders.filter(b =>
-      b.specialties.some((s: string) => selectedTypes.includes(s.toLowerCase().replace(/\\s+/g, '-')))
-    )
-  }
-
-  if (selectedPrices.length > 0) {
-    displayBuilders = displayBuilders.filter(b => {
-      return selectedPrices.some(priceKey => {
-        const [minStr, maxStr] = priceKey.split('-')
-        const filterMin = parseInt(minStr) || 0
-        const filterMax = maxStr !== 'null' ? parseInt(maxStr) : Infinity
-        // Check for overlap between builder price range and filter range
-        return b.priceRange.min <= filterMax && b.priceRange.max >= filterMin
-      })
+  if (selectedSizes.length > 0) {
+    displayBuilders = displayBuilders.filter((builder) => {
+      const stateCount = builder.activeMarkets.length
+      const size = stateCount >= 20 ? 'national' : stateCount >= 5 ? 'regional' : 'local'
+      return selectedSizes.includes(size)
     })
   }
 
@@ -248,13 +227,18 @@ export default async function BuildersDirectoryPage(props: {
                 <span className="block text-emerald-400">Home Builders</span>
               </h1>
               <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-                Browse top-rated builders, explore their communities, and find the perfect
-                partner for your new home journey. From national names to local experts.
+                Browse verified builders by name, state, and city. Community and home
+                inventory is coming soon as the directory expands.
               </p>
 
               {/* Quick Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-                {stats.map((stat) => (
+                {[
+                  { icon: Building2, value: `${Math.max(builderData.length, 200)}+`, label: 'Builders' },
+                  { icon: MapPin, value: `${Math.max(dynamicMarketOptions.length, 50)}+`, label: 'Markets' },
+                  { icon: Users, value: `${dynamicMarketOptions.length || 'Active'}`, label: 'States' },
+                  { icon: Star, value: 'Verified', label: 'Profiles' },
+                ].map((stat) => (
                   <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                     <stat.icon className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
                     <p className="text-2xl md:text-3xl font-bold">{stat.value}</p>
@@ -271,25 +255,23 @@ export default async function BuildersDirectoryPage(props: {
           <div className="container mx-auto px-4">
             <Card className="shadow-lg border-0">
               <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
+                <form className="flex flex-col md:flex-row gap-4" action="/builders">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Search builders by name..."
+                      name="q"
+                      defaultValue={typeof searchParams.q === 'string' ? searchParams.q : ''}
                       className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" className="h-12 px-6">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Filter by Location
-                    </Button>
-                    <Button className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700">
+                    <Button type="submit" className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700">
                       Search Builders
                     </Button>
                   </div>
-                </div>
+                </form>
               </CardContent>
             </Card>
           </div>
@@ -300,25 +282,13 @@ export default async function BuildersDirectoryPage(props: {
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Filters Sidebar */}
-              <aside className="lg:w-64 flex-shrink-0">
+              <aside className="hidden lg:block lg:w-64 flex-shrink-0">
                 <div className="sticky top-24 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 pb-4">
                   <BuildersFilter
                     title="Markets"
                     options={dynamicMarketOptions.map(m => ({ ...m, checked: selectedMarkets.includes(m.value) }))}
                     type="checkbox"
                     searchParamKey="market"
-                  />
-                  <BuildersFilter
-                    title="Community Types"
-                    options={communityTypeOptions.map(t => ({ label: t.label, value: t.value, checked: selectedTypes.includes(t.value) }))}
-                    type="checkbox"
-                    searchParamKey="type"
-                  />
-                  <BuildersFilter
-                    title="Price Range"
-                    options={priceRangeOptions.map(p => ({ label: p.label, value: `${p.min}-${p.max}`, checked: selectedPrices.includes(`${p.min}-${p.max}`) }))}
-                    type="checkbox"
-                    searchParamKey="price"
                   />
                   <BuildersFilter
                     title="Builder Size"
@@ -417,8 +387,8 @@ export default async function BuildersDirectoryPage(props: {
                 Browse Builders by Market
               </h2>
               <p className="text-slate-600">
-                Find top builders in your desired location. Explore communities
-                across the country&apos;s hottest new home markets.
+                Find top builders in your desired location and follow clean state
+                builder directories.
               </p>
             </div>
 
@@ -426,7 +396,7 @@ export default async function BuildersDirectoryPage(props: {
               {dynamicMarketOptions.slice(0, 10).map((market) => (
                 <Link
                   key={market.value}
-                  href={`/markets/${market.slug}/builders`}
+                  href={`/builders/${market.slug}`}
                   className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
                 >
                   <span className="font-medium text-slate-700 group-hover:text-emerald-700">
@@ -461,17 +431,17 @@ export default async function BuildersDirectoryPage(props: {
                 {
                   icon: Star,
                   title: 'Verified & Rated',
-                  description: 'All builders are verified and rated by actual home buyers. Read real reviews before you choose.',
+                  description: 'Builder profiles are organized for clear ownership, market coverage, and direct online research.',
                 },
                 {
-                  icon: TrendingUp,
+                  icon: MapPin,
                   title: 'Market Leaders',
-                  description: 'We partner with top national and regional builders who have proven track records of quality.',
+                  description: 'Browse national and regional builders with established market footprints.',
                 },
                 {
                   icon: Award,
                   title: 'Warranty Protected',
-                  description: 'Our builders offer comprehensive warranties for peace of mind in your new home investment.',
+                  description: 'Profiles link you directly to builder websites so you can verify warranties, availability, and local teams.',
                 },
               ].map((feature) => (
                 <div key={feature.title} className="text-center">
@@ -494,11 +464,11 @@ export default async function BuildersDirectoryPage(props: {
                 Ready to Find Your Builder?
               </h2>
               <p className="text-emerald-100 mb-8 text-lg">
-                Start exploring communities from top-rated builders in your area today.
+                Start exploring verified builders by market today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 shadow-lg" asChild>
-                  <Link href="/search">Search Communities</Link>
+                  <Link href="/builders">Browse Builders</Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-emerald-700" asChild>
                   <Link href="/contact">Contact Us</Link>

@@ -8,9 +8,9 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { generateBreadcrumbSchema, generatePlaceSchema } from '@/components/seo/JsonLd'
 import { BuilderCard } from '@/components/builders/BuilderCard'
 import { US_STATES, APP_NAME, APP_URL } from '@/lib/constants'
+import { LAUNCH_HIDE_INVENTORY } from '@/lib/launch'
 import {
   Building2,
-  Home,
   ArrowRight,
   BedDouble,
   Bath,
@@ -40,14 +40,13 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
 
   const cityName = city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-  const title = `New Homes in ${cityName}, ${stateInfo.code} | ${APP_NAME}`
-  const description = `Find new construction homes in ${cityName}, ${stateInfo.name}. Browse communities, compare builders, view floor plans and pricing.`
+  const title = `Homebuilders in ${cityName}, ${stateInfo.code} | ${APP_NAME}`
+  const description = `Find new construction builders in ${cityName}, ${stateInfo.name}. Browse verified builder profiles and local market information.`
 
   return {
     title,
     description,
     keywords: [
-      `new homes ${cityName}`,
       `new construction ${cityName}`,
       `${cityName} home builders`,
       `${cityName} real estate`,
@@ -56,10 +55,10 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     openGraph: {
       title,
       description,
-      url: `${APP_URL}/${state}/${city}`,
+    url: `${APP_URL}/builders/${state}/${city}`,
     },
     alternates: {
-      canonical: `/${state}/${city}`,
+      canonical: `/builders/${state}/${city}`,
     },
   }
 }
@@ -328,7 +327,6 @@ export default async function CityPage({ params }: CityPageProps) {
     communitiesCount: b.cityCommunityCount,
   }))
 
-  const totalHomes = communities.reduce((sum, c) => sum + (c.total_homes || c.home_count || 0), 0)
   const keyStats = parseKeyStats(marketPage?.key_stats)
   const faqs = parseFaqs(marketPage?.faqs)
   const cityOverviewParagraphs = textParagraphs(marketPage?.city_overview)
@@ -366,8 +364,8 @@ export default async function CityPage({ params }: CityPageProps) {
   ])
 
   const placeData = generatePlaceSchema({
-    name: `New Homes in ${cityName}, ${stateInfo.code}`,
-    description: `Find new construction homes and communities in ${cityName}, ${stateInfo.name}.`,
+    name: `Homebuilders in ${cityName}, ${stateInfo.code}`,
+    description: `Find new construction builders in ${cityName}, ${stateInfo.name}.`,
     address: '',
     city: cityName,
     state: stateInfo.code,
@@ -390,7 +388,7 @@ export default async function CityPage({ params }: CityPageProps) {
             <nav className="text-sm text-slate-400 mb-4">
               <Link href="/" className="hover:text-white transition-colors">Home</Link>
               <span className="mx-2">/</span>
-              <Link href={`/${stateInfo.slug}`} className="hover:text-white transition-colors">
+              <Link href={`/builders/${stateInfo.slug}`} className="hover:text-white transition-colors">
                 {stateInfo.name}
               </Link>
               <span className="mx-2">/</span>
@@ -399,30 +397,27 @@ export default async function CityPage({ params }: CityPageProps) {
 
             <div className="max-w-4xl">
               <h1 className="max-w-3xl text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
-                New Homes in {cityName}, {stateInfo.code}
+                Homebuilders in {cityName}, {stateInfo.code}
               </h1>
               {!marketPage?.city_overview && (
                 <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
-                  Explore builders{communities.length > 0 ? `, ${communities.length} communities,` : ''} and
-                  new construction opportunities in {cityName}. Compare local options
-                  to find your perfect home.
+                  Explore verified builders and new construction opportunities in {cityName}.
+                  Community and home inventory is coming soon.
                 </p>
               )}
 
               {/* Quick Stats */}
               <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-200">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4 text-emerald-400" />
-                  <span><strong className="text-white">{totalHomes > 0 ? totalHomes + '+' : 'New'}</strong> Homes</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-emerald-400" />
                   <span><strong className="text-white">{cityBuilders.length}</strong> Builders</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <School className="h-4 w-4 text-emerald-400" />
-                  <span><strong className="text-white">{communities.length}</strong> Communities</span>
-                </div>
+                {keyStats.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <School className="h-4 w-4 text-emerald-400" />
+                    <span><strong className="text-white">{keyStats.length}</strong> Market Stats</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -479,11 +474,11 @@ export default async function CityPage({ params }: CityPageProps) {
                   Top Builders in {cityName}
                 </h2>
                 <p className="text-slate-600">
-                  Discover top-rated builders and their exceptional communities
+                  Discover top-rated builders active in this market
                 </p>
               </div>
               <Button variant="outline" className="mt-4 md:mt-0" asChild>
-                <Link href={`/markets/${stateInfo.slug}/builders`}>View All Builders <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                <Link href={`/builders/${stateInfo.slug}`}>View All Builders <ArrowRight className="h-4 w-4 ml-1" /></Link>
               </Button>
             </div>
 
@@ -534,7 +529,7 @@ export default async function CityPage({ params }: CityPageProps) {
                         <p className="mt-2 line-clamp-2 text-sm text-slate-600">{builder.description}</p>
                         <p className="mt-3 flex items-center gap-1 text-xs font-medium text-slate-500">
                           <Users className="h-3.5 w-3.5" />
-                          {builder.communitiesCount} communities
+                          Active builder profile
                         </p>
                       </div>
                     </Link>
@@ -545,7 +540,7 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
         </section>
 
-        {/* Communities Section */}
+        {!LAUNCH_HIDE_INVENTORY && (
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-6">
@@ -578,7 +573,7 @@ export default async function CityPage({ params }: CityPageProps) {
                       By{' '}
                       {community.builders?.slug ? (
                         <Link
-                          href={`/${stateInfo.slug}/${citySlug}/${community.builders.slug}`}
+                          href={`/builders/${community.builders.slug}`}
                           className="text-emerald-600 hover:underline"
                         >
                           {community.builders.name}
@@ -630,6 +625,7 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
         </section>
+        )}
 
         {(marketInfoSections.some((section) => marketPage?.[section.key]) || faqs.length > 0) && (
           <section className="bg-slate-50 py-12">
@@ -707,7 +703,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 {nearbyCities.map((nearbyCity) => (
                   <Link
                     key={nearbyCity}
-                    href={`/${stateInfo.slug}/${toSlug(nearbyCity)}`}
+                    href={`/builders/${stateInfo.slug}/${toSlug(nearbyCity)}`}
                     className="px-4 py-2 bg-white border border-slate-200 rounded-full hover:border-emerald-500 hover:text-emerald-600 transition-colors"
                   >
                     {nearbyCity}

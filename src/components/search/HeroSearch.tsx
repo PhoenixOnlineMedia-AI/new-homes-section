@@ -1,10 +1,10 @@
 'use client'
 
-import { SearchBar } from './SearchBar'
 import { POPULAR_STATES } from '@/lib/constants'
+import { HOMEPAGE_HERO_TEXT, LAUNCH_BANNER } from '@/lib/launch'
 import Link from 'next/link'
 import Image from 'next/image'
-import { TrendingUp, Building2, MapPin, Home } from 'lucide-react'
+import { TrendingUp, Building2, MapPin, Search } from 'lucide-react'
 
 export function HeroSearch() {
   return (
@@ -31,30 +31,40 @@ export function HeroSearch() {
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm font-semibold mb-8 shadow-lg">
             <span className="flex h-2.5 w-2.5 rounded-full bg-re-green-400 animate-pulse shadow-[0_0_8px_rgba(166,196,56,0.8)]" />
             <TrendingUp className="h-4 w-4" />
-            Over 10,000 New Homes Available
+            {LAUNCH_BANNER}
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
-            Find Your Perfect
+            Find Trusted
             <span className="block mt-2 text-re-green-400 drop-shadow-md">
-              New Home
+              Homebuilders
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-white/95 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md font-medium">
-            Search new construction homes, communities, and builders across the US.
-            Compare prices, floor plans, and find your dream home today.
+            {HOMEPAGE_HERO_TEXT}
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8 drop-shadow-xl">
-            <SearchBar
-              variant="hero"
-              placeholder="Enter city, state, or ZIP code..."
-            />
-          </div>
+          <form action="/builders" className="max-w-2xl mx-auto mb-8 drop-shadow-xl">
+            <div className="relative">
+              <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                name="q"
+                type="search"
+                placeholder="Search builders by name, city, or state..."
+                className="h-14 w-full rounded-full border border-white/40 bg-white pl-12 pr-32 text-base text-slate-900 shadow-lg outline-none transition focus:border-re-green-400 focus:ring-4 focus:ring-re-green-400/30 md:h-16 md:text-lg"
+              />
+              <button
+                type="submit"
+                className="absolute right-1.5 top-1/2 h-11 -translate-y-1/2 rounded-full bg-re-blue-900 px-6 text-sm font-semibold text-white transition hover:bg-re-blue-800 md:h-12"
+              >
+                Search
+              </button>
+            </div>
+          </form>
 
           {/* Quick Builder Browse */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
@@ -71,14 +81,9 @@ export function HeroSearch() {
           {/* Quick Stats - Premium Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             <div className="glass-panel rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
-              <Home className="h-6 w-6 text-re-green-400 mx-auto mb-2 drop-shadow-sm" />
-              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">10K+</p>
-              <p className="text-sm text-white/90 font-medium">New Homes</p>
-            </div>
-            <div className="glass-panel rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
               <MapPin className="h-6 w-6 text-re-green-400 mx-auto mb-2 drop-shadow-sm" />
-              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">500+</p>
-              <p className="text-sm text-white/90 font-medium">Communities</p>
+              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">50+</p>
+              <p className="text-sm text-white/90 font-medium">Markets</p>
             </div>
             <div className="glass-panel rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
               <Building2 className="h-6 w-6 text-re-green-400 mx-auto mb-2 drop-shadow-sm" />
@@ -87,8 +92,13 @@ export function HeroSearch() {
             </div>
             <div className="glass-panel rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
               <TrendingUp className="h-6 w-6 text-re-green-400 mx-auto mb-2 drop-shadow-sm" />
-              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">50+</p>
-              <p className="text-sm text-white/90 font-medium">States</p>
+              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">Active</p>
+              <p className="text-sm text-white/90 font-medium">State Pages</p>
+            </div>
+            <div className="glass-panel rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
+              <Search className="h-6 w-6 text-re-green-400 mx-auto mb-2 drop-shadow-sm" />
+              <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">City</p>
+              <p className="text-sm text-white/90 font-medium">Builder Search</p>
             </div>
           </div>
 
@@ -98,7 +108,7 @@ export function HeroSearch() {
             {POPULAR_STATES.slice(0, 6).map((state) => (
               <Link
                 key={state.code}
-                href={`/${state.slug}`}
+                href={`/builders/${state.slug}`}
                 className="px-4 py-1.5 text-sm bg-white/15 hover:bg-re-green-500 text-white rounded-full transition-all border border-white/20 hover:border-re-green-400 hover:shadow-lg backdrop-blur-sm"
               >
                 {state.name}

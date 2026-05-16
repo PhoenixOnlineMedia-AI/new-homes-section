@@ -5,8 +5,8 @@
 export const APP_NAME = 'New Homes Section'
 export const APP_DOMAIN = 'newhomessection.com'
 export const APP_URL = `https://${APP_DOMAIN}`
-export const APP_TAGLINE = 'Find Your Perfect New Home'
-export const APP_DESCRIPTION = 'Search new home communities, builders, and new construction homes for sale. Compare prices, floor plans, and amenities across the best new home developments.'
+export const APP_TAGLINE = 'Find Trusted Homebuilders'
+export const APP_DESCRIPTION = 'Browse verified new construction homebuilder profiles by state, city, and market. Communities and homes are coming soon.'
 
 export const SOCIAL_LINKS = {
   facebook: 'https://facebook.com/newhomessection',

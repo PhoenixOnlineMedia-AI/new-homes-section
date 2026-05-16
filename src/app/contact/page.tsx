@@ -34,15 +34,15 @@ const contactReasons = [
   {
     icon: Home,
     title: 'Home Buyer',
-    description: 'Looking for a new home? We can help you find the perfect community.',
-    cta: 'Search Homes',
-    href: '/search',
+    description: 'Researching builders? Start with verified profiles and local markets.',
+    cta: 'Browse Builders',
+    href: '/builders',
     color: 'bg-blue-100 text-blue-700',
   },
   {
     icon: Building2,
     title: 'Builder Partnership',
-    description: 'Want to feature your communities? Let\'s discuss partnership opportunities.',
+    description: 'Want to feature your company profile and markets? Let\'s discuss partnership opportunities.',
     cta: 'Partner With Us',
     href: '#builder-inquiry',
     color: 'bg-emerald-100 text-emerald-700',
@@ -59,12 +59,12 @@ const contactReasons = [
 
 const faqs = [
   {
-    question: 'How do I search for new home communities?',
-    answer: 'Use our search feature to browse communities by location, price range, builder, or amenities. You can also browse by state or city to find communities in your desired area.',
+    question: 'How do I search for builders?',
+    answer: 'Use the builder directory to browse by builder name, state, or city market. Community and home inventory will be added after launch.',
   },
   {
-    question: 'Are the home listings updated in real-time?',
-    answer: 'We work directly with builders to ensure our listings are as current as possible. Availability and pricing are updated regularly, but we recommend contacting the builder directly for the most up-to-date information.',
+    question: 'When will community and home listings be available?',
+    answer: 'We are launching first with verified builder profiles. Community and home inventory is planned for Q3 2026.',
   },
   {
     question: 'How can my company partner with New Homes Section?',
@@ -234,7 +234,7 @@ export default function ContactPage() {
                   Partner With {APP_NAME}
                 </h2>
                 <p className="text-slate-300 text-lg">
-                  Join hundreds of builders showcasing their communities to thousands of 
+                  Join builders showcasing their company profile and local markets to
                   qualified home buyers every month.
                 </p>
               </div>
@@ -247,9 +247,9 @@ export default function ContactPage() {
                   </h3>
                   <ul className="space-y-3">
                     {[
-                      'Showcase all your communities in one place',
+                      'Showcase your builder profile and local markets',
                       'Reach pre-qualified home buyers actively searching',
-                      'Detailed analytics on community performance',
+                      'Detailed analytics on builder profile performance',
                       'SEO-optimized pages for better visibility',
                       'Direct lead generation to your sales team',
                     ].map((benefit) => (
@@ -290,7 +290,7 @@ export default function ContactPage() {
                     Builder Partnership Inquiry
                   </CardTitle>
                   <CardDescription>
-                    Tell us about your company and communities. Our partnership team will contact you shortly.
+                    Tell us about your company and markets. Our partnership team will contact you shortly.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -356,13 +356,13 @@ export default function ContactPage() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center text-white">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Ready to Find Your New Home?
+                Ready to Find Your Builder?
               </h2>
               <p className="text-emerald-100 mb-8 text-lg">
-                Browse thousands of new construction homes from top builders across the country.
+                Browse verified builder profiles and local market pages across the country.
               </p>
               <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 shadow-lg" asChild>
-                <Link href="/search">Start Your Search</Link>
+                <Link href="/builders">Browse Builders</Link>
               </Button>
             </div>
           </div>

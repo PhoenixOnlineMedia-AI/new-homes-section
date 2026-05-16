@@ -8,13 +8,12 @@ import {
   Building2,
   Star,
   MapPin,
-  Home,
   ArrowRight,
   CheckCircle2,
-  TrendingUp,
   Award,
   Edit
 } from 'lucide-react'
+import { LAUNCH_HIDE_INVENTORY } from '@/lib/launch'
 
 interface Community {
   name: string
@@ -110,22 +109,21 @@ export function BuilderCard({ builder, isAdmin }: BuilderCardProps) {
                   {builder.description}
                 </p>
 
-                {/* Stats Row */}
-                <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Home className="h-4 w-4 text-emerald-600" />
-                    <span className="font-medium text-slate-900">{builder.communitiesCount}</span>
-                    <span className="text-slate-500">communities</span>
+                {!LAUNCH_HIDE_INVENTORY && (
+                  <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-slate-900">{builder.communitiesCount}</span>
+                      <span className="text-slate-500">communities</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-slate-900">{builder.homesBuilt.toLocaleString()}+</span>
+                      <span className="text-slate-500">homes built</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-slate-900">{builder.priceRange.label}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium text-slate-900">{builder.homesBuilt.toLocaleString()}+</span>
-                    <span className="text-slate-500">homes built</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-slate-900">{builder.priceRange.label}</span>
-                  </div>
-                </div>
+                )}
 
                 {/* Active Markets */}
                 <div className="flex flex-wrap items-center gap-1.5 mb-3">
@@ -157,35 +155,8 @@ export function BuilderCard({ builder, isAdmin }: BuilderCardProps) {
             </div>
           </div>
 
-          {/* Right Section - Featured Communities Preview */}
-          <div className="lg:w-72 bg-slate-50 p-4 border-t lg:border-t-0 lg:border-l border-slate-100">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
-              Featured Communities
-            </p>
-            <div className="space-y-3">
-              {builder.featuredCommunities.slice(0, 2).map((community) => (
-                <Link
-                  key={community.name}
-                  href={`/builders/${builder.slug}/communities/${community.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="flex items-center gap-3 group/community"
-                >
-                  <div className="w-14 h-14 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    <Building2 className="h-6 w-6 text-slate-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 group-hover/community:text-emerald-600 transition-colors truncate">
-                      {community.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {community.city}, {community.state}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-4 pt-4 border-t border-slate-200 space-y-2">
+          <div className="lg:w-64 bg-slate-50 p-4 border-t lg:border-t-0 lg:border-l border-slate-100">
+            <div className="space-y-2">
               <Button
                 size="sm"
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
@@ -196,16 +167,13 @@ export function BuilderCard({ builder, isAdmin }: BuilderCardProps) {
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                asChild
-              >
-                <Link href={`/builders/${builder.slug}/communities`}>
-                  View Communities
-                </Link>
-              </Button>
+              {!LAUNCH_HIDE_INVENTORY && (
+                <Button size="sm" variant="outline" className="w-full" asChild>
+                  <Link href={`/builders/${builder.slug}/communities`}>
+                    View Communities
+                  </Link>
+                </Button>
+              )}
               {isAdmin && (
                 <Button
                   size="sm"

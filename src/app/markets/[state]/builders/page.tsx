@@ -11,36 +11,9 @@ import { createClient } from '@/lib/supabase/server'
 import {
   Building2,
   MapPin,
-  Star,
   Search,
-  Users
 } from 'lucide-react'
 import { JsonLd } from '@/components/seo/JsonLd'
-
-// Stats for the page
-const stats = [
-  { icon: Building2, value: '50+', label: 'Builders' },
-  { icon: MapPin, value: '200+', label: 'Markets' },
-  { icon: Users, value: '2,500+', label: 'Communities' },
-  { icon: Star, value: '4.5', label: 'Avg. Rating' },
-]
-
-const communityTypeOptions = [
-  { label: 'Single Family', value: 'single-family' },
-  { label: 'Townhomes', value: 'townhomes' },
-  { label: 'Condos', value: 'condos' },
-  { label: '55+ Communities', value: '55-plus' },
-  { label: 'Luxury', value: 'luxury' },
-  { label: 'Active Adult', value: 'active-adult' },
-]
-
-const priceRangeOptions = [
-  { label: 'Under $300k', min: 0, max: 300000 },
-  { label: '$300k - $500k', min: 300000, max: 500000 },
-  { label: '$500k - $750k', min: 500000, max: 750000 },
-  { label: '$750k - $1M', min: 750000, max: 1000000 },
-  { label: '$1M+', min: 1000000, max: null },
-]
 
 const builderSizeOptions = [
   { label: 'National (20+ states)', value: 'national' },
@@ -61,7 +34,7 @@ export async function generateMetadata({ params }: MarketBuildersPageProps): Pro
 
   return {
     title: `Find New Home Builders in ${stateInfo.name} | ${APP_NAME}`,
-    description: `Browse top-rated new home builders across ${stateInfo.name}. Discover communities and available home plans in ${stateInfo.name}.`,
+    description: `Browse verified new home builders across ${stateInfo.name}. Discover state and city builder profiles in ${stateInfo.name}.`,
     keywords: [
       `new home builders ${stateInfo.name}`,
       `home builders directory ${stateInfo.name}`,
@@ -86,9 +59,8 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
     notFound()
   }
 
-  const selectedTypes = typeof searchParams.type === 'string' ? searchParams.type.split(',') : []
-  const selectedPrices = typeof searchParams.price === 'string' ? searchParams.price.split(',') : []
   const selectedSizes = typeof searchParams.size === 'string' ? searchParams.size.split(',') : []
+  const query = typeof searchParams.q === 'string' ? searchParams.q.trim().toLowerCase() : ''
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
 
   const supabase = await createClient()
@@ -148,21 +120,23 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
   // Pre-filter exactly to the current state code
   displayBuilders = displayBuilders.filter(b => b.activeMarkets.includes(stateInfo.code.toUpperCase()))
 
-  // Apply other filters in-memory
-  if (selectedTypes.length > 0) {
-    displayBuilders = displayBuilders.filter(b =>
-      b.specialties.some((s: string) => selectedTypes.includes(s.toLowerCase().replace(/\\s+/g, '-')))
-    )
+  if (query) {
+    displayBuilders = displayBuilders.filter((builder) => {
+      const haystack = [
+        builder.name,
+        builder.description,
+        builder.headquarters,
+        ...safeArray(builder.builder_markets).map((market: any) => market.city),
+      ].filter(Boolean).join(' ').toLowerCase()
+      return haystack.includes(query)
+    })
   }
 
-  if (selectedPrices.length > 0) {
-    displayBuilders = displayBuilders.filter(b => {
-      return selectedPrices.some(priceKey => {
-        const [minStr, maxStr] = priceKey.split('-')
-        const filterMin = parseInt(minStr) || 0
-        const filterMax = maxStr !== 'null' ? parseInt(maxStr) : Infinity
-        return b.priceRange.min <= filterMax && b.priceRange.max >= filterMin
-      })
+  if (selectedSizes.length > 0) {
+    displayBuilders = displayBuilders.filter((builder) => {
+      const stateCount = builder.activeMarkets.length
+      const size = stateCount >= 20 ? 'national' : stateCount >= 5 ? 'regional' : 'local'
+      return selectedSizes.includes(size)
     })
   }
 
@@ -194,7 +168,7 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
         '@type': 'CollectionPage',
         name: `New Home Builders in ${stateInfo.name}`,
         description: `Browse top-rated new home builders in ${stateInfo.name}.`,
-        url: `https://newhomessection.com/markets/${stateInfo.slug}/builders`,
+        url: `https://newhomessection.com/builders/${stateInfo.slug}`,
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: displayBuilders.map((builder, index) => ({
@@ -237,7 +211,7 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
                 <span className="block text-emerald-400">{stateInfo.name}</span>
               </h1>
               <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-                Browse rated builders and start exploring communities specifically in {stateInfo.name}.
+                Browse verified builders serving {stateInfo.name}. Community and home inventory is coming soon.
               </p>
             </div>
           </div>
@@ -248,12 +222,14 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
           <div className="container mx-auto px-4">
             <Card className="shadow-lg border-0">
               <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
+                <form className="flex flex-col md:flex-row gap-4" action={`/builders/${stateInfo.slug}`}>
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Search builders by name..."
+                      name="q"
+                      defaultValue={typeof searchParams.q === 'string' ? searchParams.q : ''}
                       className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
                   </div>
@@ -262,7 +238,7 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
                       Search
                     </Button>
                   </div>
-                </div>
+                </form>
               </CardContent>
             </Card>
           </div>
@@ -273,20 +249,8 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Filters Sidebar */}
-              <aside className="lg:w-64 flex-shrink-0">
+              <aside className="hidden lg:block lg:w-64 flex-shrink-0">
                 <div className="sticky top-24 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 pb-4">
-                  <BuildersFilter
-                    title="Community Types"
-                    options={communityTypeOptions.map(t => ({ label: t.label, value: t.value, checked: selectedTypes.includes(t.value) }))}
-                    type="checkbox"
-                    searchParamKey="type"
-                  />
-                  <BuildersFilter
-                    title="Price Range"
-                    options={priceRangeOptions.map(p => ({ label: p.label, value: `${p.min}-${p.max}`, checked: selectedPrices.includes(`${p.min}-${p.max}`) }))}
-                    type="checkbox"
-                    searchParamKey="price"
-                  />
                   <BuildersFilter
                     title="Builder Size"
                     options={builderSizeOptions.map(s => ({ ...s, checked: selectedSizes.includes(s.value) }))}
@@ -343,7 +307,7 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
                   <div className="mt-8 flex items-center justify-center gap-2">
                     <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
                       {page > 1 ? (
-                        <Link scroll={false} href={`/markets/${stateInfo.slug}/builders?${buildQueryString({ page: String(page - 1) })}`}>Previous</Link>
+                        <Link scroll={false} href={`/builders/${stateInfo.slug}?${buildQueryString({ page: String(page - 1) })}`}>Previous</Link>
                       ) : (
                         <span>Previous</span>
                       )}
@@ -355,7 +319,7 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
 
                     <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>
                       {page < totalPages ? (
-                        <Link scroll={false} href={`/markets/${stateInfo.slug}/builders?${buildQueryString({ page: String(page + 1) })}`}>Next</Link>
+                        <Link scroll={false} href={`/builders/${stateInfo.slug}?${buildQueryString({ page: String(page + 1) })}`}>Next</Link>
                       ) : (
                         <span>Next</span>
                       )}
