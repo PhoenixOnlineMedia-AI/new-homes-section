@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Menu, Home, MapPin, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { APP_NAME, APP_TAGLINE } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 
 const mainNavItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -15,9 +16,26 @@ const mainNavItems = [
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 8)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-panel border-x-0 border-t-0 rounded-none">
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full border-x-0 border-t-0 border-b border-slate-200/80 bg-white shadow-sm transition-[background-color,box-shadow,border-color] duration-200 md:bg-white/[0.94] md:backdrop-blur-xl md:saturate-150',
+        isScrolled && 'border-slate-200 bg-white md:bg-white/[0.98] md:shadow-md'
+      )}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">

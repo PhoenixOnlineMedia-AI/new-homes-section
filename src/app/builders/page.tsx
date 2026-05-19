@@ -43,6 +43,8 @@ const builderSizeOptions = [
   { label: 'Local (1-4 states)', value: 'local' },
 ]
 
+const SHOW_BUILDERS_SEARCH = false
+
 function safeArray(arr: any): any[] {
   if (!arr) return []
   return Array.isArray(arr) ? arr : [arr]
@@ -250,32 +252,33 @@ export default async function BuildersDirectoryPage(props: {
           </div>
         </section>
 
-        {/* Search Bar Section */}
-        <section className="py-6 -mt-4">
-          <div className="container mx-auto px-4">
-            <Card className="shadow-lg border-0">
-              <CardContent className="p-4">
-                <form className="flex flex-col md:flex-row gap-4" action="/builders">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search builders by name..."
-                      name="q"
-                      defaultValue={typeof searchParams.q === 'string' ? searchParams.q : ''}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700">
-                      Search Builders
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+        {SHOW_BUILDERS_SEARCH && (
+          <section className="py-6 -mt-4">
+            <div className="container mx-auto px-4">
+              <Card className="shadow-lg border-0">
+                <CardContent className="p-4">
+                  <form className="flex flex-col md:flex-row gap-4" action="/builders">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search builders by name..."
+                        name="q"
+                        defaultValue={typeof searchParams.q === 'string' ? searchParams.q : ''}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700">
+                        Search Builders
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
 
         {/* Main Content */}
         <section className="py-8">

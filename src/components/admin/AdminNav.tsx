@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Building2,
   MapPin,
+  Map,
   Home,
   ImageIcon,
   Upload,
@@ -23,6 +24,7 @@ const navItems = [
   {
     title: 'Upload Data',
     href: '/admin/upload/builders',
+    activeMatch: '/admin/upload',
     icon: Upload,
     children: [
       { title: 'Builders CSV', href: '/admin/upload/builders' },
@@ -36,6 +38,11 @@ const navItems = [
     title: 'Builders',
     href: '/admin/builders',
     icon: Building2,
+  },
+  {
+    title: 'Markets',
+    href: '/admin/markets',
+    icon: Map,
   },
   {
     title: 'Communities',
@@ -69,13 +76,18 @@ export function AdminNav() {
 
   return (
     <nav className="p-4 space-y-1">
-      {navItems.map((item) => (
+      {navItems.map((item) => {
+        const isActive = item.activeMatch
+          ? pathname === item.activeMatch || pathname?.startsWith(item.activeMatch + '/')
+          : pathname === item.href
+
+        return (
         <div key={item.href}>
           <Link
             href={item.href}
             className={cn(
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              pathname === item.href || pathname?.startsWith(item.href + '/')
+              isActive
                 ? 'bg-blue-50 text-blue-700'
                 : 'text-gray-700 hover:bg-gray-100'
             )}
@@ -84,7 +96,7 @@ export function AdminNav() {
             {item.title}
           </Link>
 
-          {item.children && (pathname?.startsWith(item.href) || pathname === item.href) && (
+          {item.children && isActive && (
             <div className="ml-4 mt-1 space-y-1">
               {item.children.map((child) => (
                 <Link
@@ -103,7 +115,8 @@ export function AdminNav() {
             </div>
           )}
         </div>
-      ))}
+        )
+      })}
     </nav>
   )
 }
