@@ -57,6 +57,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${APP_URL}/resources/home-buying-guide`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${APP_URL}/resources/mortgage-calculator`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${APP_URL}/resources/moving-checklist`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
       url: `${APP_URL}/privacy`,
       lastModified: new Date(),
       changeFrequency: 'monthly',

@@ -10,9 +10,9 @@ const footerLinks = {
     { label: 'Contact a Builder', href: '/contact' },
   ],
   resources: [
-    { label: 'Home Buying Guide', href: '/' },
-    { label: 'Mortgage Calculator', href: '/' },
-    { label: 'Moving Checklist', href: '/' },
+    { label: 'Home Buying Guide', href: '/resources/home-buying-guide' },
+    { label: 'Mortgage Calculator', href: '/resources/mortgage-calculator' },
+    { label: 'Moving Checklist', href: '/resources/moving-checklist' },
     { label: 'Blog', href: '/' },
   ],
   company: [
