@@ -33,6 +33,8 @@ type CommunityRecord = {
 }
 
 type BuilderMarketRecord = {
+  local_description?: string | null
+  image_url?: string | null
   city?: string | null
   state_code?: string | null
 }
@@ -133,6 +135,7 @@ export default async function BuilderMarketPage({ params }: BuilderMarketPagePro
   const stateMarkets = safeArray(builder.builder_markets as BuilderMarketRecord[] | BuilderMarketRecord | null).filter((marketRecord) => (
     (marketRecord.state_code || '').toUpperCase() === builderState.code
   ))
+  const stateProfile = stateMarkets.find((marketRecord) => !(marketRecord.city || '').trim()) || null
 
   const cityNames = Array.from(new Set([
     ...stateCommunities.map((community) => community.city),
@@ -176,9 +179,7 @@ export default async function BuilderMarketPage({ params }: BuilderMarketPagePro
                 {builder.name} in {builderState.name}
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-                {builder.name}&apos;s {builderState.name} presence includes builder
-                market coverage{cityNames.length > 0 ? ` in ${cityNames.slice(0, 4).join(', ')}` : ''}.
-                Community and home inventory will be added as launch data comes online.
+                {stateProfile?.local_description || `${builder.name}'s ${builderState.name} presence includes builder market coverage${cityNames.length > 0 ? ` in ${cityNames.slice(0, 4).join(', ')}` : ''}. Community and home inventory will be added as launch data comes online.`}
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 {builder.website && (
@@ -211,7 +212,7 @@ export default async function BuilderMarketPage({ params }: BuilderMarketPagePro
                   </div>
                 </div>
                 <p className="leading-7 text-slate-700">
-                  {builder.description || `${builder.name} is a homebuilder serving buyers in selected markets.`}
+                  {stateProfile?.local_description || builder.description || `${builder.name} is a homebuilder serving buyers in selected markets.`}
                 </p>
                 <p className="mt-4 leading-7 text-slate-700">
                   Buyers researching {builder.name} in {builderState.name} can use this

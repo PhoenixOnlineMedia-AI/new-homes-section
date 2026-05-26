@@ -10,6 +10,7 @@ import { US_STATES, APP_NAME } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/server'
 import {
   Building2,
+  BarChart3,
   MapPin,
   Search,
 } from 'lucide-react'
@@ -32,9 +33,22 @@ export async function generateMetadata({ params }: MarketBuildersPageProps): Pro
   
   if (!stateInfo) return {}
 
+  const supabase = await createClient()
+  const { data: statePageData } = await supabase
+    .from('state_pages')
+    .select('meta_title,meta_description,intro')
+    .eq('state_code', stateInfo.code)
+    .maybeSingle()
+
+  const statePage = statePageData as {
+    meta_title: string | null
+    meta_description: string | null
+    intro: string | null
+  } | null
+
   return {
-    title: `Find New Home Builders in ${stateInfo.name} | ${APP_NAME}`,
-    description: `Browse verified new home builders across ${stateInfo.name}. Discover state and city builder profiles in ${stateInfo.name}.`,
+    title: statePage?.meta_title || `Find New Home Builders in ${stateInfo.name} | ${APP_NAME}`,
+    description: statePage?.meta_description || statePage?.intro || `Browse verified new home builders across ${stateInfo.name}. Discover state and city builder profiles in ${stateInfo.name}.`,
     keywords: [
       `new home builders ${stateInfo.name}`,
       `home builders directory ${stateInfo.name}`,
@@ -46,6 +60,49 @@ export async function generateMetadata({ params }: MarketBuildersPageProps): Pro
 function safeArray(arr: any): any[] {
   if (!arr) return []
   return Array.isArray(arr) ? arr : [arr]
+}
+
+type StatePageContent = {
+  state_code: string
+  intro: string | null
+  key_stats: string | null
+  market_overview: string | null
+  builder_landscape: string | null
+  featured_cities: string | null
+  faqs: string | null
+  meta_title: string | null
+  meta_description: string | null
+}
+
+function parseKeyStats(value: string | null | undefined) {
+  if (!value) return []
+
+  const tokens = value
+    .split('|')
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^:?-{3,}:?$/.test(token))
+
+  if (tokens[0]?.toLowerCase() === 'metric' && tokens[1]?.toLowerCase() === 'value') {
+    tokens.splice(0, 2)
+  }
+
+  const stats: { metric: string; value: string }[] = []
+  for (let index = 0; index < tokens.length; index += 2) {
+    const metric = tokens[index]
+    const statValue = tokens[index + 1]
+    if (metric && statValue) stats.push({ metric, value: statValue })
+  }
+
+  return stats
+}
+
+function textParagraphs(value: string | null | undefined) {
+  if (!value) return []
+  return value
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
 }
 
 export default async function MarketBuildersPage(props: MarketBuildersPageProps) {
@@ -64,6 +121,15 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
 
   const supabase = await createClient()
+  const { data: statePageData } = await supabase
+    .from('state_pages')
+    .select('state_code,intro,key_stats,market_overview,builder_landscape,featured_cities,faqs,meta_title,meta_description')
+    .eq('state_code', stateInfo.code)
+    .maybeSingle()
+
+  const statePage = statePageData as StatePageContent | null
+  const stateStats = parseKeyStats(statePage?.key_stats)
+
   const { data: builders } = await supabase
     .from('builders')
     .select('*, communities(*), builder_markets(*)')
@@ -211,11 +277,51 @@ export default async function MarketBuildersPage(props: MarketBuildersPageProps)
                 <span className="block text-emerald-400">{stateInfo.name}</span>
               </h1>
               <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-                Browse verified builders serving {stateInfo.name}. Community and home inventory is coming soon.
+                {statePage?.intro || `Browse verified builders serving ${stateInfo.name}. Community and home inventory is coming soon.`}
               </p>
+              {(stateStats.length > 0 || displayBuilders.length > 0) && (
+                <div className="mx-auto mt-8 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <Building2 className="mx-auto mb-2 h-5 w-5 text-emerald-400" />
+                    <p className="text-2xl font-bold">{displayBuilders.length}</p>
+                    <p className="text-sm text-slate-300">Builders</p>
+                  </div>
+                  {stateStats.slice(0, 3).map((stat) => (
+                    <div key={stat.metric} className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                      <BarChart3 className="mx-auto mb-2 h-5 w-5 text-emerald-400" />
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-sm text-slate-300">{stat.metric}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
+
+        {(statePage?.market_overview || statePage?.builder_landscape || statePage?.featured_cities || statePage?.faqs) && (
+          <section className="border-b border-slate-200 bg-white py-10">
+            <div className="container mx-auto px-4">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {[
+                  ['State Market Overview', statePage.market_overview],
+                  ['Builder Landscape', statePage.builder_landscape],
+                  ['Featured Cities', statePage.featured_cities],
+                  ['FAQs', statePage.faqs],
+                ].filter((section): section is [string, string] => Boolean(section[1])).map(([title, content]) => (
+                  <article key={title} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                    <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+                    <div className="mt-3 space-y-3 text-sm leading-6 text-slate-700">
+                      {textParagraphs(content).map((paragraph) => (
+                        <p key={paragraph}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Search Bar Section */}
         <section className="py-6 -mt-4">

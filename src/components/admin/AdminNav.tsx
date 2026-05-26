@@ -42,7 +42,12 @@ const navItems = [
   {
     title: 'Markets',
     href: '/admin/markets',
+    activeMatch: '/admin/markets',
     icon: Map,
+    children: [
+      { title: 'City Markets', href: '/admin/markets' },
+      { title: 'State Pages', href: '/admin/markets/state-pages' },
+    ],
   },
   {
     title: 'Communities',

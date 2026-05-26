@@ -400,6 +400,60 @@ export type MarketPageUpdate = {
   updated_at?: string
 }
 
+export type StatePageRow = {
+  id: string
+  state_code: string
+  intro: string | null
+  key_stats: string | null
+  market_overview: string | null
+  builder_landscape: string | null
+  featured_cities: string | null
+  faqs: string | null
+  hero_image_url: string | null
+  hero_image_alt: string | null
+  meta_title: string | null
+  meta_description: string | null
+  source_site: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type StatePageInsert = {
+  id?: string
+  state_code: string
+  intro?: string | null
+  key_stats?: string | null
+  market_overview?: string | null
+  builder_landscape?: string | null
+  featured_cities?: string | null
+  faqs?: string | null
+  hero_image_url?: string | null
+  hero_image_alt?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  source_site?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type StatePageUpdate = {
+  id?: string
+  state_code?: string
+  intro?: string | null
+  key_stats?: string | null
+  market_overview?: string | null
+  builder_landscape?: string | null
+  featured_cities?: string | null
+  faqs?: string | null
+  hero_image_url?: string | null
+  hero_image_alt?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  source_site?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
 export type MediaAssetRow = {
   id: string
   entity_type: 'builder' | 'builder_market' | 'market_page' | 'community' | 'home' | 'unassigned'
@@ -491,6 +545,11 @@ export interface Database {
         Row: MarketPageRow
         Insert: MarketPageInsert
         Update: MarketPageUpdate
+      }
+      state_pages: {
+        Row: StatePageRow
+        Insert: StatePageInsert
+        Update: StatePageUpdate
       }
       media_assets: {
         Row: MediaAssetRow

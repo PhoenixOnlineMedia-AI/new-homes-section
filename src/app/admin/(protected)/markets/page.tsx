@@ -33,12 +33,19 @@ export default async function MarketsAdminPage() {
             Manage city market page content and featured builder ordering.
           </p>
         </div>
-        <Link href="/admin/upload/market-info">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Market Info
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/admin/markets/state-pages">
+            <Button variant="outline">
+              State Pages
+            </Button>
+          </Link>
+          <Link href="/admin/upload/market-info">
+            <Button variant="outline">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Market Info
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>

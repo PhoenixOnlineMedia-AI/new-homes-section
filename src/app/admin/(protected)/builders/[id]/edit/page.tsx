@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/admin/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import type { Builder, Database } from '@/lib/supabase/database.types'
 import { BuilderMarketsEditor } from '@/components/admin/BuilderMarketsEditor'
+import { BuilderStateProfilesEditor, type BuilderStateProfileRow } from '@/components/admin/BuilderStateProfilesEditor'
+import { US_STATES } from '@/lib/constants'
 import Link from 'next/link'
 
 type BuilderUpdate = Database['public']['Tables']['builders']['Update']
@@ -26,6 +29,7 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
     if (error || !builder) {
         return <div>Builder not found</div>
     }
+    const currentBuilder = builder
 
     // Fetch existing market overrides
     const { data: rawMarkets } = await supabase
@@ -34,10 +38,29 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
         .eq('builder_id', id)
         .order('city', { ascending: true })
 
-    const builderMarkets = rawMarkets || []
+    const builderMarkets = (rawMarkets || []) as Database['public']['Tables']['builder_markets']['Row'][]
+    const stateProfiles: BuilderStateProfileRow[] = builderMarkets
+        .filter((market) => !(market.city || '').trim())
+        .map((market) => {
+            const state = US_STATES.find((item) => item.code === market.state_code)
+            return {
+                id: market.id,
+                stateCode: market.state_code,
+                stateName: state?.name || market.state_code,
+                stateSlug: state?.slug || market.state_code.toLowerCase(),
+                localDescription: market.local_description || '',
+                imageUrl: market.image_url || '',
+                isFeatured: market.is_featured || false,
+                sortOrder: market.sort_order || 0,
+            }
+        })
+
+    const cityMarkets = builderMarkets.filter((market) => (market.city || '').trim())
 
     async function updateBuilder(formData: FormData) {
         'use server'
+
+        await requireAdmin()
 
         const updateData: BuilderUpdate = {
             name: formData.get('name') as string,
@@ -75,6 +98,109 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
 
     // Create a bound action that doesn't capture the `params` closure incorrectly for Server Actions
     const boundUpdateBuilder = updateBuilder.bind(null)
+
+    async function saveStateProfile(input: {
+        id: string | null
+        stateCode: string
+        localDescription: string
+        imageUrl: string
+        isFeatured: boolean
+        sortOrder: number
+    }): Promise<{ ok: boolean; id?: string; error?: string }> {
+        'use server'
+
+        await requireAdmin()
+
+        const supabaseAdmin = createAdminClient()
+        const stateCode = input.stateCode.trim().toUpperCase()
+        const payload = {
+            builder_id: id,
+            city: null,
+            state_code: stateCode,
+            local_description: input.localDescription.trim() || null,
+            image_url: input.imageUrl.trim() || null,
+            is_featured: input.isFeatured,
+            sort_order: Number.isFinite(input.sortOrder) ? input.sortOrder : 0,
+        }
+
+        let profileId = input.id
+        if (!profileId) {
+            const { data: existingRows, error: findError } = await supabaseAdmin
+                .from('builder_markets')
+                .select('id,city')
+                .eq('builder_id', id)
+                .eq('state_code', stateCode)
+
+            if (findError) {
+                console.error('Failed to find state profile', findError)
+                return { ok: false, error: findError.message || 'Could not find state profile.' }
+            }
+
+            const existingProfiles = (existingRows || []) as unknown as { id: string; city: string | null }[]
+            profileId = existingProfiles.find((profile) => !(profile.city || '').trim())?.id || null
+        }
+
+        if (profileId) {
+            const { error: updateError } = await supabaseAdmin
+                .from('builder_markets')
+                .update(payload as never)
+                .eq('id', profileId)
+
+            if (updateError) {
+                console.error('Failed to update state profile', updateError)
+                return { ok: false, error: updateError.message || 'Could not update state profile.' }
+            }
+
+            const state = US_STATES.find((item) => item.code === stateCode)
+            revalidatePath(`/admin/builders/${id}/edit`)
+            revalidatePath(`/builders/${currentBuilder.slug}`)
+            if (state) revalidatePath(`/builders/${currentBuilder.slug}/${state.slug}`)
+            return { ok: true, id: profileId }
+        }
+
+        const { data: insertedRows, error: insertError } = await supabaseAdmin
+            .from('builder_markets')
+            .insert(payload as never)
+            .select('id')
+
+        if (insertError) {
+            console.error('Failed to create state profile', insertError)
+            return { ok: false, error: insertError.message || 'Could not create state profile.' }
+        }
+
+        const inserted = (insertedRows as unknown as { id: string }[] | null)?.[0]
+        if (!inserted?.id) {
+            return { ok: false, error: 'State profile was saved, but no id was returned.' }
+        }
+
+        const state = US_STATES.find((item) => item.code === stateCode)
+        revalidatePath(`/admin/builders/${id}/edit`)
+        revalidatePath(`/builders/${currentBuilder.slug}`)
+        if (state) revalidatePath(`/builders/${currentBuilder.slug}/${state.slug}`)
+        return { ok: true, id: inserted.id }
+    }
+
+    async function deleteStateProfile(profileId: string): Promise<{ ok: boolean; error?: string }> {
+        'use server'
+
+        await requireAdmin()
+
+        const supabaseAdmin = createAdminClient()
+        const { error: deleteError } = await supabaseAdmin
+            .from('builder_markets')
+            .delete()
+            .eq('id', profileId)
+            .eq('builder_id', id)
+
+        if (deleteError) {
+            console.error('Failed to delete state profile', deleteError)
+            return { ok: false, error: deleteError.message || 'Could not delete state profile.' }
+        }
+
+        revalidatePath(`/admin/builders/${id}/edit`)
+        revalidatePath(`/builders/${currentBuilder.slug}`)
+        return { ok: true }
+    }
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
@@ -161,7 +287,19 @@ export default async function EditBuilderPage({ params }: { params: Promise<{ id
 
             <BuilderMarketsEditor
                 builderId={builder.id}
-                initialMarkets={builderMarkets}
+                initialMarkets={cityMarkets}
+            />
+
+            <BuilderStateProfilesEditor
+                builderSlug={currentBuilder.slug}
+                stateOptions={US_STATES.map((state) => ({
+                    code: state.code,
+                    name: state.name,
+                    slug: state.slug,
+                }))}
+                initialProfiles={stateProfiles}
+                onSaveProfile={saveStateProfile}
+                onDeleteProfile={deleteStateProfile}
             />
         </div>
     )

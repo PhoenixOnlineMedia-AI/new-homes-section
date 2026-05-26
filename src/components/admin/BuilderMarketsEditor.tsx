@@ -47,8 +47,8 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
 
     async function handleAddMarket(e: React.FormEvent) {
         e.preventDefault()
-        if (!stateCode) {
-            setError('State Code is required')
+        if (!city.trim() || !stateCode) {
+            setError('City and State Code are required. Use Builder State Profiles for state-wide profiles.')
             return
         }
 
@@ -136,14 +136,15 @@ export function BuilderMarketsEditor({ builderId, initialMarkets }: BuilderMarke
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="market_city">City (Optional)</Label>
+                            <Label htmlFor="market_city">City</Label>
                             <Input
                                 id="market_city"
                                 placeholder="e.g. Austin"
                                 value={city}
                                 onChange={e => setCity(e.target.value)}
+                                required
                             />
-                            <p className="text-xs text-slate-500">Leave blank to feature the builder State-Wide.</p>
+                            <p className="text-xs text-slate-500">Use Builder State Profiles below for state-wide profiles.</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="market_state">State Code</Label>
